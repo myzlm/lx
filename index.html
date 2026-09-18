@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>墨韵 · 连线</title>
+<style>
+/* ============================================================
+   根基 · 墨色与鎏金
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink-0:#0a0806; --ink-1:#100d0a; --ink-2:#17130f;
+  --ink-3:#1f1a15; --ink-4:#2a2320; --ink-5:#3a3128;
+  --gold:#c9a961; --gold-2:#e8d5a0; --gold-3:#8a7440; --gold-4:#5c4d2a;
+  --cinnabar:#9e2b25; --cinnabar-2:#c1392b;
+  --paper:#e6dcc4; --paper-2:#b8ab90; --paper-3:#7d735f;
+  --ok:#7fa86b; --err:#b84a3f;
+  --font-serif:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC","SimSun",serif;
+  --font-kai:"KaiTi","STKaiti","Kaiti SC","楷体",var(--font-serif);
+}
+html,body{height:100%}
+body{
+  background:var(--ink-0); color:var(--paper);
+  font-family:var(--font-serif); font-size:14px; line-height:1.7;
+  display:flex; flex-direction:column; overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(ellipse 65% 55% at 12% -5%, rgba(201,169,97,.07), transparent 62%),
+    radial-gradient(ellipse 55% 55% at 92% 105%, rgba(158,43,37,.055), transparent 62%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(201,169,97,.02), transparent 70%);
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--ink-5);border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:var(--gold-4)}
+
+/* ============================================================
+   顶栏 · 匾额
+   ============================================================ */
+.topbar{
+  position:relative; z-index:5; flex:none;
+  height:66px; display:flex; align-items:center; gap:16px;
+  padding:0 24px;
+  background:linear-gradient(180deg,var(--ink-2),var(--ink-1));
+  border-bottom:1px solid var(--gold-4);
+  box-shadow:0 1px 0 rgba(201,169,97,.13), 0 8px 28px rgba(0,0,0,.55);
+}
+.topbar::after{
+  content:''; position:absolute; left:0; right:0; bottom:3px; height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-4) 18%,var(--gold-4) 82%,transparent);
+  opacity:.55;
+}
+.seal-badge{
+  width:40px; height:40px; flex:none; display:grid; place-items:center;
+  background:linear-gradient(140deg,var(--cinnabar-2),var(--cinnabar));
+  color:#f7ecdc; font-family:var(--font-kai); font-size:23px; font-weight:700;
+  line-height:1; padding-bottom:3px; border-radius:3px;
+  box-shadow:
+    0 0 0 1px rgba(201,169,97,.45),
+    0 0 14px rgba(158,43,37,.4),
+    inset 0 0 10px rgba(0,0,0,.35);
+}
+.brand{display:flex; flex-direction:column; justify-content:center; line-height:1.15}
+.brand h1{
+  font-family:var(--font-kai); font-size:22px; font-weight:400;
+  letter-spacing:.24em; color:var(--gold-2);
+  text-shadow:0 0 18px rgba(201,169,97,.4);
+}
+.brand .tagline{
+  font-size:10px; color:var(--paper-3); letter-spacing:.42em; margin-top:3px;
+  font-family:var(--font-kai);
+}
+.spacer{flex:1}
+.status-pill{
+  display:flex; align-items:center; gap:8px;
+  font-size:12px; color:var(--paper-2); letter-spacing:.08em;
+  padding:5px 13px; border:1px solid var(--ink-5); border-radius:2px;
+  background:rgba(0,0,0,.3);
+}
+.dot{
+  width:6px; height:6px; border-radius:50%; flex:none;
+  background:var(--err); box-shadow:0 0 7px currentColor; transition:.35s;
+}
+.dot.on{background:var(--ok); box-shadow:0 0 9px var(--ok)}
+.user-pill{
+  font-family:var(--font-kai); font-size:13px; color:var(--gold-3);
+  letter-spacing:.14em; padding:5px 14px;
+  border:1px solid var(--gold-4); border-radius:2px;
+  background:rgba(201,169,97,.045);
+}
+
+/* ============================================================
+   主体 · 三屏
+   ============================================================ */
+.grid{
+  position:relative; z-index:1; flex:1; min-height:0;
+  display:grid; grid-template-columns:252px 1fr 336px;
+  padding:15px; gap:15px;
+}
+.col{
+  position:relative; display:flex; flex-direction:column; min-height:0;
+  background:linear-gradient(180deg,var(--ink-2),var(--ink-1));
+  border:1px solid var(--gold-4); border-radius:3px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.55),
+    inset 0 0 46px rgba(0,0,0,.4),
+    0 10px 32px rgba(0,0,0,.45);
+  overflow:hidden;
+}
+.col::before,.col::after{
+  content:''; position:absolute; width:13px; height:13px;
+  border:1px solid var(--gold-3); opacity:.55; pointer-events:none; z-index:3;
+}
+.col::before{top:5px; left:5px; border-right:none; border-bottom:none}
+.col::after{bottom:5px; right:5px; border-left:none; border-top:none}
+.col-head{
+  flex:none; height:42px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px; border-bottom:1px solid var(--gold-4);
+  background:linear-gradient(180deg,rgba(201,169,97,.07),transparent);
+}
+.col-head .t{
+  font-family:var(--font-kai); font-size:13.5px; letter-spacing:.24em;
+  color:var(--gold); text-shadow:0 0 12px rgba(201,169,97,.25);
+}
+.col-head .n{
+  font-size:11px; color:var(--paper-3); letter-spacing:.1em;
+  font-family:var(--font-kai);
+}
+.col-body{flex:1; overflow-y:auto; padding:9px; min-height:0}
+
+/* 用户列表 */
+.user-item{
+  display:flex; align-items:center; gap:11px;
+  padding:9px 11px; cursor:pointer; border-radius:2px;
+  border-left:2px solid transparent; transition:.18s;
+}
+.user-item:hover{background:rgba(201,169,97,.055)}
+.user-item.active{
+  background:linear-gradient(90deg,rgba(201,169,97,.14),transparent 90%);
+  border-left-color:var(--gold);
+}
+.user-item .avatar{
+  width:31px; height:31px; flex:none; display:grid; place-items:center;
+  background:linear-gradient(140deg,var(--cinnabar),#5e1a17);
+  color:#f2e6d2; font-family:var(--font-kai); font-size:16px; line-height:1;
+  border-radius:2px; padding-bottom:2px;
+  box-shadow:inset 0 0 0 1px rgba(201,169,97,.35);
+}
+.user-item .name{
+  flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:13.5px; letter-spacing:.03em;
+}
+.user-item .tag{
+  font-size:10px; font-family:var(--font-kai); letter-spacing:.12em;
+  color:var(--gold-3); border:1px solid var(--gold-4);
+  padding:0 5px; border-radius:2px; line-height:1.6;
+}
+.empty{
+  padding:26px 12px; text-align:center; font-size:12px;
+  color:var(--paper-3); font-family:var(--font-kai); letter-spacing:.16em;
+}
+
+/* ============================================================
+   舞台 · 音画
+   ============================================================ */
+.stage{
+  flex:1; min-height:0; position:relative; display:grid; place-items:center;
+  background:radial-gradient(ellipse at center,#15110d,#070504 78%);
+  overflow:hidden;
+}
+.stage::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 50% 45%, rgba(201,169,97,.045), transparent 70%);
+}
+#remoteVideo{
+  width:100%; height:100%; object-fit:contain; background:#000; display:none;
+}
+#localVideo{
+  position:absolute; right:17px; bottom:17px; width:182px; max-width:30%;
+  aspect-ratio:16/9; object-fit:cover; display:none;
+  transform:scaleX(-1); background:#000; border-radius:2px;
+  border:1px solid var(--gold-3);
+  box-shadow:0 6px 24px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.6);
+  z-index:2;
+}
+.hint{
+  position:relative; text-align:center; padding:26px;
+  color:var(--paper-3); font-size:12.5px; line-height:2.4; letter-spacing:.14em;
+  font-family:var(--font-kai);
+}
+.hint b{
+  display:block; font-family:var(--font-kai); font-size:20px; font-weight:400;
+  color:var(--gold); letter-spacing:.42em; margin-bottom:16px;
+  text-shadow:0 0 24px rgba(201,169,97,.4);
+}
+.hint .hr{
+  width:64px; height:1px; margin:0 auto 16px;
+  background:linear-gradient(90deg,transparent,var(--gold-3),transparent);
+}
+
+/* 控制条 */
+.controls{
+  flex:none; display:flex; gap:9px; justify-content:center; flex-wrap:wrap;
+  padding:14px; border-top:1px solid var(--gold-4);
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.4));
+}
+button{
+  font-family:var(--font-kai); font-size:13.5px; letter-spacing:.14em;
+  color:var(--paper); background:linear-gradient(180deg,var(--ink-4),var(--ink-3));
+  border:1px solid var(--gold-4); border-radius:2px;
+  padding:8px 16px; cursor:pointer; transition:.18s; position:relative;
+  white-space:nowrap;
+}
+button:hover:not(:disabled){
+  color:var(--gold-2); border-color:var(--gold-3);
+  background:linear-gradient(180deg,#2f2820,var(--ink-4));
+  box-shadow:0 0 14px rgba(201,169,97,.22), inset 0 0 14px rgba(201,169,97,.07);
+}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.3; cursor:not-allowed}
+button.primary{
+  background:linear-gradient(180deg,#4b3b1a,#332816);
+  border-color:var(--gold-3); color:var(--gold-2);
+}
+button.primary:hover:not(:disabled){
+  background:linear-gradient(180deg,#5d4920,#3e3018);
+  box-shadow:0 0 20px rgba(201,169,97,.32), inset 0 0 16px rgba(201,169,97,.12);
+}
+button.danger{
+  background:linear-gradient(180deg,#4b1a16,#331210);
+  border-color:#6e2420; color:#e8b2aa;
+}
+button.danger:hover:not(:disabled){
+  background:linear-gradient(180deg,#5f211c,#3e1512);
+  border-color:var(--cinnabar-2);
+  box-shadow:0 0 18px rgba(193,57,43,.34);
+}
+button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
+
+/* ============================================================
+   消息 · 竹简
+   ============================================================ */
+.log{
+  flex:1; min-height:0; overflow-y:auto; padding:14px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.msg{
+  max-width:88%; padding:8px 13px; font-size:13.5px; line-height:1.78;
+  word-break:break-word; border-radius:2px; position:relative;
+}
+.msg.me{
+  align-self:flex-end;
+  background:linear-gradient(180deg,#3b2f19,#2a2112);
+  border:1px solid var(--gold-4); color:var(--gold-2);
+  box-shadow:0 0 14px rgba(201,169,97,.08);
+}
+.msg.you{
+  align-self:flex-start;
+  background:linear-gradient(180deg,var(--ink-3),var(--ink-2));
+  border:1px solid var(--ink-5);
+}
+.msg.sys{
+  align-self:center; background:transparent; border:none;
+  color:var(--paper-3); font-size:11.5px; letter-spacing:.14em;
+  padding:3px 0; font-family:var(--font-kai);
+}
+.msg.sys::before{content:'— '}
+.msg.sys::after{content:' —'}
+
+.file-card{
+  align-self:stretch; padding:11px 14px; border-radius:2px;
+  background:linear-gradient(180deg,var(--ink-3),var(--ink-2));
+  border:1px solid var(--gold-4); border-left:2px solid var(--gold-3);
+  font-size:12.5px; position:relative;
+}
+.file-card .row{display:flex; justify-content:space-between; gap:10px; align-items:center}
+.file-card .name{
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-family:var(--font-kai); font-size:13.5px; letter-spacing:.06em;
+}
+.file-card .meta{color:var(--paper-3); font-size:11px; margin-top:3px; letter-spacing:.08em}
+.file-card a{color:var(--gold); text-decoration:none; border-bottom:1px dotted var(--gold-3)}
+.file-card a:hover{color:var(--gold-2)}
+.bar{
+  height:3px; background:var(--ink-5); margin-top:9px;
+  overflow:hidden; border-radius:1px;
+}
+.bar i{
+  display:block; height:100%; width:0;
+  background:linear-gradient(90deg,var(--gold-4),var(--gold),var(--gold-2));
+  transition:width .2s; box-shadow:0 0 9px rgba(201,169,97,.6);
+}
+
+.composer{
+  flex:none; display:flex; gap:8px; padding:12px;
+  border-top:1px solid var(--gold-4);
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.34));
+}
+.composer input[type=text]{
+  flex:1; min-width:0; font-family:var(--font-serif); font-size:13.5px;
+  color:var(--paper); background:var(--ink-1);
+  border:1px solid var(--gold-4); border-radius:2px;
+  padding:8px 12px; outline:none; transition:.18s; letter-spacing:.04em;
+}
+.composer input[type=text]:focus{
+  border-color:var(--gold-3);
+  box-shadow:0 0 0 1px rgba(201,169,97,.15), inset 0 0 12px rgba(201,169,97,.05);
+}
+.composer input[type=text]::placeholder{color:var(--paper-3); letter-spacing:.1em}
+
+/* ============================================================
+   弹窗 · 帖
+   ============================================================ */
+.mask{
+  position:fixed; inset:0; z-index:100; padding:20px;
+  display:none; place-items:center;
+  background:rgba(5,4,3,.8); backdrop-filter:blur(6px);
+}
+.mask.show{display:grid; animation:fadeIn .22s ease}
+@keyframes fadeIn{from{opacity:0}}
+.dialog{
+  width:min(370px,100%); padding:30px 28px 24px; text-align:center;
+  background:linear-gradient(180deg,var(--ink-2),var(--ink-1));
+  border:1px solid var(--gold-3); border-radius:3px; position:relative;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.65),
+    0 0 70px rgba(201,169,97,.09),
+    0 34px 90px rgba(0,0,0,.85);
+}
+.dialog::before,.dialog::after{
+  content:''; position:absolute; width:17px; height:17px;
+  border:1px solid var(--gold-3); opacity:.7;
+}
+.dialog::before{top:7px; left:7px; border-right:none; border-bottom:none}
+.dialog::after{bottom:7px; right:7px; border-left:none; border-top:none}
+.dialog h3{
+  font-family:var(--font-kai); font-size:19px; font-weight:400;
+  letter-spacing:.24em; color:var(--gold-2); margin-bottom:11px;
+  text-shadow:0 0 18px rgba(201,169,97,.35);
+}
+.dialog p{color:var(--paper-2); font-size:13px; margin-bottom:24px; letter-spacing:.08em}
+.dialog .actions{display:flex; gap:12px; justify-content:center}
+
+/* ============================================================
+   浮言
+   ============================================================ */
+#toasts{
+  position:fixed; top:84px; left:50%; transform:translateX(-50%);
+  z-index:200; display:flex; flex-direction:column; gap:9px;
+  align-items:center; pointer-events:none;
+}
+.toast{
+  padding:9px 22px; border-radius:2px; font-size:13px;
+  font-family:var(--font-kai); letter-spacing:.14em; color:var(--gold-2);
+  background:linear-gradient(180deg,var(--ink-3),var(--ink-2));
+  border:1px solid var(--gold-3);
+  box-shadow:0 10px 34px rgba(0,0,0,.75), 0 0 22px rgba(201,169,97,.12);
+  animation:toastIn .26s ease;
+}
+@keyframes toastIn{from{opacity:0; transform:translateY(-12px)}}
+
+/* ============================================================
+   小屏
+   ============================================================ */
+@media(max-width:920px){
+  .grid{
+    grid-template-columns:1fr; grid-template-rows:auto minmax(200px,1fr) auto;
+    padding:10px; gap:10px;
+  }
+  .col.users .col-body{max-height:126px}
+  .col.chat .log{max-height:170px}
+  .topbar{height:58px; padding:0 14px; gap:11px}
+  .brand h1{font-size:17px; letter-spacing:.16em}
+  .brand .tagline{display:none}
+  .seal-badge{width:34px; height:34px; font-size:20px}
+  .status-pill .txt{display:none}
+  .status-pill{padding:5px 9px}
+  .user-pill{font-size:12px; padding:4px 10px}
+  button{padding:7px 12px; font-size:12.5px; letter-spacing:.1em}
+  #localVideo{width:120px; right:11px; bottom:11px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ 顶栏 ══════════ -->
+<header class="topbar">
+  <div class="seal-badge">墨</div>
+  <div class="brand">
+    <h1>墨韵 · 连线</h1>
+    <div class="tagline">一纸相连 · 音书万里</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="status-pill">
+    <i class="dot" id="dot"></i><span class="txt" id="statusText">连接中</span>
+  </div>
+  <div class="user-pill" id="meText">—</div>
+</header>
+
+<!-- ══════════ 主体 ══════════ -->
+<main class="grid">
+
+  <!-- 左：在线用户 -->
+  <section class="col users">
+    <div class="col-head">
+      <span class="t">在 线 用 户</span>
+      <span class="n" id="onlineCount">0</span>
+    </div>
+    <div class="col-body" id="userList">
+      <div class="empty">暂无同门在线</div>
+    </div>
+  </section>
+
+  <!-- 中：音画舞台 -->
+  <section class="col stage-col">
+    <div class="stage" id="stage">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <video id="localVideo" autoplay playsinline muted></video>
+      <div class="hint" id="stageHint">
+        <b>择 友 而 谈</b>
+        <div class="hr"></div>
+        点击左侧在线用户<br>
+        发起视频 · 语音 · 传书
+      </div>
+    </div>
+    <div class="controls" id="controls">
+      <button class="primary" id="btnVideo" disabled>视频</button>
+      <button class="primary" id="btnAudio" disabled>语音</button>
+      <button id="btnData" disabled>传书</button>
+      <button id="btnScreen" disabled>共享屏</button>
+      <button id="btnMute" disabled>静音</button>
+      <button class="danger" id="btnHangup" disabled>挂断</button>
+    </div>
+  </section>
+
+  <!-- 右：消息与文件 -->
+  <section class="col chat">
+    <div class="col-head">
+      <span class="t">消 息 与 文 书</span>
+      <span class="n" id="peerLabel">—</span>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="composer">
+      <input type="text" id="chatInput" placeholder="书 一 言 …" disabled>
+      <button class="sm" id="btnSend" disabled>送</button>
+      <button class="sm" id="btnPick" disabled>文书</button>
+      <input type="file" id="fileInput" hidden multiple>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════ 来电 ══════════ -->
+<div class="mask" id="incomingMask">
+  <div class="dialog">
+    <h3>有 客 来 电</h3>
+    <p id="incomingDesc">对方邀请你通话</p>
+    <div class="actions">
+      <button class="danger" id="btnReject">辞 谢</button>
+      <button class="primary" id="btnAccept">应 邀</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 收书 ══════════ -->
+<div class="mask" id="fileMask">
+  <div class="dialog">
+    <h3>有 书 相 赠</h3>
+    <p id="fileDesc">对方想发送文件给你</p>
+    <div class="actions">
+      <button class="danger" id="btnFileReject">辞 谢</button>
+      <button class="primary" id="btnFileAccept">收 下</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ============================================================
+   配置 · 后端地址
+   ============================================================ */
+const API_BASE = 'https://myzlm.serveousercontent.com';
+const WS_URL   = 'wss://myzlm.serveousercontent.com/ws/rtc';
+
+const CHUNK_SIZE = 16 * 1024;
+const HIGH_WATER = 4 * 1024 * 1024;
+const LOW_WATER  = 1024 * 1024;
+
+/* ============================================================
+   状态
+   ============================================================ */
+let csrf = '';
+let ws = null;
+let me = null;
+let iceServers = [{ urls: ['stun:stun.l.google.com:19302'] }];
+let onlineUsers = [];
+let selectedPeer = null;
+let call = null;
+let reconnectTimer = null;
+let sendQueue = [];
+let sending = false;
+let rxFile = null;
+let pendingIncoming = null;
+let pendingFileOffer = null;
+let screenStream = null;
+
+const $ = id => document.getElementById(id);
+const rand = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    }));
+
+/* ============================================================
+   工具
+   ============================================================ */
+function toast(text, ms = 2600) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = text;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+function fmtSize(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + ' MB';
+  return (n / 1073741824).toFixed(2) + ' GB';
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
+  ));
+}
+function setStatus(text, ok) {
+  $('statusText').textContent = text;
+  $('dot').classList.toggle('on', !!ok);
+}
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({}, opts.headers || {});
+  if (opts.body && typeof opts.body === 'string') headers['Content-Type'] = 'application/json';
+  if (opts.method && opts.method !== 'GET') headers['X-CSRF-Token'] = csrf;
+
+  const res = await fetch(API_BASE + path, {
+    credentials: 'include',
+    mode: 'cors',
+    ...opts,
+    headers
+  });
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+  if (!res.ok) throw new Error((data && data.error) || ('请求失败 ' + res.status));
+  return data;
+}
+
+/* ============================================================
+   消息区
+   ============================================================ */
+function logNode(text, cls) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = text;
+  $('log').appendChild(d);
+  $('log').scrollTop = $('log').scrollHeight;
+  return d;
+}
+function sysLog(text) { logNode(text, 'sys'); }
+
+/* ============================================================
+   启动
+   ============================================================ */
+async function boot() {
+  try {
+    me = await api('/api/me');
+  } catch (e) {
+    setStatus('无法连接', false);
+    toast('无法连接服务器');
+    return;
+  }
+  if (!me) {
+    $('meText').textContent = '未登录';
+    setStatus('待登录', false);
+    document.body.insertAdjacentHTML('beforeend',
+      '<div class="mask show"><div class="dialog"><h3>尚 未 登 录</h3>' +
+      '<p>请先前往主站登录后再使用连线功能</p>' +
+      '<div class="actions">' +
+      '<button class="primary" onclick="location.href=\'' + API_BASE + '\'">前往主站</button>' +
+      '</div></div></div>');
+    return;
+  }
+  csrf = me.csrfToken;
+  $('meText').textContent = me.username + ' · ' + roleText(me.role);
+  await connect();
+}
+
+function roleText(r) {
+  return ({ owner: '主人', admin: '管事', member: '同门' })[r] || r;
+}
+
+async function connect() {
+  clearTimeout(reconnectTimer);
+  try {
+    const t = await api('/api/rtc/ticket', { method: 'POST' });
+    openWS(t.token);
+  } catch (e) {
+    setStatus('凭证失败', false);
+    reconnectTimer = setTimeout(connect, 5000);
+  }
+}
+
+function openWS(ticket) {
+  try { if (ws) ws.close(); } catch (_) {}
+  ws = new WebSocket(WS_URL + '?ticket=' + encodeURIComponent(ticket));
+
+  ws.onopen = () => setStatus('已 通', true);
+
+  ws.onmessage = ev => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch (_) { return; }
+    handleSignal(msg);
+  };
+
+  ws.onclose = () => {
+    setStatus('已 断', false);
+    cleanupCall(true);
+    reconnectTimer = setTimeout(connect, 3000);
+  };
+}
+
+function send(obj) {
+  if (ws && ws.readyState === 1) {
+    try { ws.send(JSON.stringify(obj)); return true; } catch (_) {}
+  }
+  return false;
+}
+
+/* ============================================================
+   信令
+   ============================================================ */
+function handleSignal(msg) {
+  switch (msg.type) {
+    case 'ready':
+      if (Array.isArray(msg.iceServers) && msg.iceServers.length) {
+        iceServers = msg.iceServers;
+      }
+      break;
+
+    case 'presence':
+      onlineUsers = (msg.users || []).filter(u => u !== me.username);
+      renderUsers();
+      break;
+
+    case 'peer:offline':
+      toast('对方已离线');
+      if (call && call.peer === msg.to) cleanupCall(false);
+      break;
+
+    case 'error':
+      toast(msg.error || '服务端异常');
+      break;
+
+    case 'call:invite':   onIncoming(msg); break;
+    case 'call:accept':   onAccepted(msg); break;
+
+    case 'call:reject':
+      toast('对方辞谢了通话' + (msg.reason ? '（' + msg.reason + '）' : ''));
+      cleanupCall(false);
+      break;
+
+    case 'call:cancel':
+      if (pendingIncoming && pendingIncoming.from === msg.from) {
+        pendingIncoming = null;
+        $('incomingMask').classList.remove('show');
+        sysLog('对方取消了呼叫');
+      }
+      break;
+
+    case 'call:hangup':
+      sysLog('对方已挂断');
+      cleanupCall(false);
+      break;
+
+    case 'rtc:offer':  onRemoteOffer(msg); break;
+    case 'rtc:answer': onRemoteAnswer(msg); break;
+    case 'rtc:ice':    onRemoteIce(msg); break;
+  }
+}
+
+/* ============================================================
+   用户列表
+   ============================================================ */
+function renderUsers() {
+  const box = $('userList');
+  $('onlineCount').textContent = onlineUsers.length;
+  if (!onlineUsers.length) {
+    box.innerHTML = '<div class="empty">暂无同门在线</div>';
+    return;
+  }
+  box.innerHTML = '';
+  for (const u of onlineUsers) {
+    const el = document.createElement('div');
+    el.className = 'user-item' + (selectedPeer === u ? ' active' : '');
+    el.innerHTML =
+      '<div class="avatar">' + escapeHtml(u.slice(0, 1).toUpperCase()) + '</div>' +
+      '<div class="name">' + escapeHtml(u) + '</div>' +
+      '<div class="tag">在线</div>';
+    el.onclick = () => selectPeer(u);
+    el.ondblclick = () => startCall(u, 'video');
+    box.appendChild(el);
+  }
+}
+
+function selectPeer(u) {
+  selectedPeer = u;
+  renderUsers();
+  $('peerLabel').textContent = u;
+  updateButtons();
+}
+
+function updateButtons() {
+  const busy = !!call;
+  const connected = call && call.state === 'connected';
+  const hasPeer = !!selectedPeer;
+
+  $('btnVideo').disabled  = busy || !hasPeer;
+  $('btnAudio').disabled  = busy || !hasPeer;
+  $('btnData').disabled   = busy || !hasPeer;
+  $('btnHangup').disabled = !busy;
+  $('btnMute').disabled   = !connected;
+  $('btnScreen').disabled = !connected;
+  $('btnSend').disabled   = !connected;
+  $('btnPick').disabled   = !connected;
+  $('chatInput').disabled = !connected;
+}
+
+/* ============================================================
+   发起呼叫
+   ============================================================ */
+async function startCall(peer, media) {
+  if (call) return toast('已有通话进行中');
+  if (!peer) return toast('请先择一人');
+  if (peer === me.username) return toast('不可呼叫自己');
+
+  const callId = rand();
+  let stream = null;
+
+  try {
+    if (media !== 'data') {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video: media === 'video'
+          ? { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } }
+          : false
+      });
+    }
+  } catch (e) {
+    return toast('无法取用设备：' + e.message);
+  }
+
+  call = {
+    id: callId, peer, role: 'caller', media,
+    pc: null, localStream: stream, remoteStream: new MediaStream(),
+    dcCtrl: null, dcFile: null, pendingIce: [], state: 'inviting'
+  };
+
+  buildPC();
+  showStage();
+  updateButtons();
+
+  send({ type: 'call:invite', to: peer, callId, media, from: me.username });
+  sysLog('正在呼叫 ' + peer);
+}
+
+/* ============================================================
+   收到来电
+   ============================================================ */
+function onIncoming(msg) {
+  if (call) {
+    send({ type: 'call:reject', to: msg.from, callId: msg.callId, reason: 'busy' });
+    return;
+  }
+  pendingIncoming = msg;
+  const label = { video: '视频通话', audio: '语音通话', data: '传书' }[msg.media] || '通话';
+  $('incomingDesc').textContent = msg.from + ' 邀请你 · ' + label;
+  $('incomingMask').classList.add('show');
+}
+
+$('btnReject').onclick = () => {
+  if (pendingIncoming) {
+    send({ type: 'call:reject', to: pendingIncoming.from,
+           callId: pendingIncoming.callId, reason: 'declined' });
+    sysLog('已辞谢 ' + pendingIncoming.from);
+    pendingIncoming = null;
+  }
+  $('incomingMask').classList.remove('show');
+};
+
+$('btnAccept').onclick = async () => {
+  const inv = pendingIncoming;
+  pendingIncoming = null;
+  $('incomingMask').classList.remove('show');
+  if (!inv) return;
+
+  let stream = null;
+  try {
+    if (inv.media !== 'data') {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video: inv.media === 'video'
+          ? { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } }
+          : false
+      });
+    }
+  } catch (e) {
+    send({ type: 'call:reject', to: inv.from, callId: inv.callId, reason: 'no-device' });
+    return toast('无法取用设备：' + e.message);
+  }
+
+  call = {
+    id: inv.callId, peer: inv.from, role: 'callee', media: inv.media,
+    pc: null, localStream: stream, remoteStream: new MediaStream(),
+    dcCtrl: null, dcFile: null, pendingIce: [], state: 'connecting'
+  };
+
+  buildPC();
+  showStage();
+  updateButtons();
+
+  send({ type: 'call:accept', to: inv.from, callId: inv.callId, from: me.username });
+  sysLog('已应邀 ' + inv.from);
+};
+
+/* ============================================================
+   WebRTC
+   ============================================================ */
+function buildPC() {
+  const pc = new RTCPeerConnection({
+    iceServers, iceCandidatePoolSize: 4, bundlePolicy: 'max-bundle'
+  });
+  call.pc = pc;
+
+  if (call.localStream) {
+    for (const track of call.localStream.getTracks()) {
+      pc.addTrack(track, call.localStream);
+    }
+  }
+
+  if (call.role === 'caller') {
+    const ctrl = pc.createDataChannel('ctrl', { ordered: true });
+    const file = pc.createDataChannel('file', { ordered: true });
+    bindCtrl(ctrl);
+    bindFile(file);
+    call.dcCtrl = ctrl;
+    call.dcFile = file;
+  } else {
+    pc.ondatachannel = ev => {
+      const ch = ev.channel;
+      if (ch.label === 'ctrl') { call.dcCtrl = ch; bindCtrl(ch); }
+      else if (ch.label === 'file') { call.dcFile = ch; bindFile(ch); }
+    };
+  }
+
+  pc.onicecandidate = ev => {
+    if (ev.candidate && call) {
+      send({ type: 'rtc:ice', to: call.peer, callId: call.id, candidate: ev.candidate });
+    }
+  };
+
+  pc.ontrack = ev => {
+    if (!call) return;
+    call.remoteStream.addTrack(ev.track);
+    const rv = $('remoteVideo');
+    rv.srcObject = call.remoteStream;
+    rv.style.display = 'block';
+    rv.play().catch(() => {});
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (!call) return;
+    const st = pc.connectionState;
+    if (st === 'connected') {
+      call.state = 'connected';
+      sysLog('音信已通');
+      $('stageHint').style.display = 'none';
+      updateButtons();
+    } else if (st === 'failed') {
+      toast('连接失败，或需 TURN 中转');
+      cleanupCall(false);
+    } else if (st === 'disconnected') {
+      sysLog('音信不稳…');
+    }
+  };
+}
+
+async function onAccepted(msg) {
+  if (!call || call.id !== msg.callId || call.role !== 'caller') return;
+  try {
+    const offer = await call.pc.createOffer();
+    await call.pc.setLocalDescription(offer);
+    send({ type: 'rtc:offer', to: call.peer, callId: call.id,
+           sdp: call.pc.localDescription });
+    sysLog('对方已应，正在通达…');
+  } catch (e) {
+    toast('建立连接失败：' + e.message);
+    cleanupCall(true);
+  }
+}
+
+async function onRemoteOffer(msg) {
+  if (!call || call.id !== msg.callId) return;
+  try {
+    await call.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+    await flushIce();
+    const answer = await call.pc.createAnswer();
+    await call.pc.setLocalDescription(answer);
+    send({ type: 'rtc:answer', to: call.peer, callId: call.id,
+           sdp: call.pc.localDescription });
+  } catch (e) {
+    toast('处理 offer 失败：' + e.message);
+    cleanupCall(true);
+  }
+}
+
+async function onRemoteAnswer(msg) {
+  if (!call || call.id !== msg.callId) return;
+  try {
+    await call.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+    await flushIce();
+  } catch (e) {
+    toast('处理 answer 失败：' + e.message);
+  }
+}
+
+async function onRemoteIce(msg) {
+  if (!call || call.id !== msg.callId) return;
+  const cand = msg.candidate;
+  if (!cand) return;
+  if (call.pc.remoteDescription && call.pc.remoteDescription.type) {
+    try { await call.pc.addIceCandidate(cand); } catch (_) {}
+  } else {
+    call.pendingIce.push(cand);
+  }
+}
+
+async function flushIce() {
+  if (!call) return;
+  const list = call.pendingIce;
+  call.pendingIce = [];
+  for (const c of list) {
+    try { await call.pc.addIceCandidate(c); } catch (_) {}
+  }
+}
+
+/* ============================================================
+   数据通道
+   ============================================================ */
+function bindCtrl(ch) {
+  ch.onopen = () => {
+    if (call) call.state = 'connected';
+    updateButtons();
+  };
+  ch.onclose = () => {
+    if (call && call.state === 'connected') sysLog('文路已闭');
+  };
+  ch.onmessage = ev => {
+    if (typeof ev.data !== 'string') return;
+    let m;
+    try { m = JSON.parse(ev.data); } catch (_) { return; }
+
+    if (m.type === 'chat') {
+      logNode(m.text, 'you');
+    } else if (m.type === 'file-offer') {
+      pendingFileOffer = m;
+      $('fileDesc').textContent = m.name + '（' + fmtSize(m.size) + '）';
+      $('fileMask').classList.add('show');
+    } else if (m.type === 'file-accept') {
+      const item = sendQueue.find(x => x.id === m.id);
+      if (item) item.accepted = true;
+      pumpQueue();
+    } else if (m.type === 'file-reject') {
+      sendQueue = sendQueue.filter(x => x.id !== m.id);
+      sysLog('对方辞谢文书：' + (m.name || ''));
+      pumpQueue();
+    }
+  };
+}
+
+function bindFile(ch) {
+  ch.binaryType = 'arraybuffer';
+  ch.bufferedAmountLowThreshold = LOW_WATER;
+
+  ch.onmessage = ev => {
+    if (typeof ev.data === 'string') {
+      let m;
+      try { m = JSON.parse(ev.data); } catch (_) { return; }
+      if (m.t === 'meta') {
+        rxFile = { id: m.id, name: m.name, size: m.size, mime: m.mime,
+                   chunks: [], got: 0, node: null, bar: null };
+        const node = document.createElement('div');
+        node.className = 'file-card';
+        node.innerHTML =
+          '<div class="row"><div class="name">' + escapeHtml(m.name) + '</div>' +
+          '<div style="color:var(--paper-3)">接收中</div></div>' +
+          '<div class="meta">' + fmtSize(m.size) + '</div>' +
+          '<div class="bar"><i></i></div>';
+        $('log').appendChild(node);
+        $('log').scrollTop = $('log').scrollHeight;
+        rxFile.node = node;
+        rxFile.bar = node.querySelector('.bar i');
+      } else if (m.t === 'end') {
+        finalizeReceive();
+      }
+      return;
+    }
+    if (rxFile && ev.data instanceof ArrayBuffer) {
+      rxFile.chunks.push(ev.data);
+      rxFile.got += ev.data.byteLength;
+      if (rxFile.bar) {
+        rxFile.bar.style.width = Math.min(100, rxFile.got / rxFile.size * 100) + '%';
+      }
+      if (rxFile.got >= rxFile.size) finalizeReceive();
+    }
+  };
+}
+
+function finalizeReceive() {
+  if (!rxFile) return;
+  const f = rxFile;
+  rxFile = null;
+  const blob = new Blob(f.chunks, { type: f.mime || 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  if (f.node) {
+    f.node.querySelector('.row').lastElementChild.textContent = '已收';
+    f.node.querySelector('.bar i').style.width = '100%';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = f.name;
+    a.textContent = '存 取 文 书';
+    a.style.cssText = 'display:inline-block;margin-top:9px;font-family:var(--font-kai);letter-spacing:.14em';
+    f.node.appendChild(a);
+  }
+  sysLog('文书已收：' + f.name);
+}
+
+$('btnFileAccept').onclick = () => {
+  $('fileMask').classList.remove('show');
+  if (pendingFileOffer) {
+    sendCtrl({ type: 'file-accept', id: pendingFileOffer.id });
+    pendingFileOffer = null;
+  }
+};
+$('btnFileReject').onclick = () => {
+  $('fileMask').classList.remove('show');
+  if (pendingFileOffer) {
+    sendCtrl({ type: 'file-reject', id: pendingFileOffer.id, name: pendingFileOffer.name });
+    pendingFileOffer = null;
+  }
+};
+
+function sendCtrl(obj) {
+  if (call && call.dcCtrl && call.dcCtrl.readyState === 'open') {
+    try { call.dcCtrl.send(JSON.stringify(obj)); return true; } catch (_) {}
+  }
+  return false;
+}
+
+/* ============================================================
+   文件发送
+   ============================================================ */
+$('btnPick').onclick = () => $('fileInput').click();
+$('fileInput').onchange = e => {
+  for (const f of e.target.files) enqueueFile(f);
+  e.target.value = '';
+};
+
+function enqueueFile(file) {
+  if (!call || !call.dcCtrl || call.dcCtrl.readyState !== 'open') {
+    return toast('文路未通');
+  }
+  const id = rand();
+  sendQueue.push({ id, file, accepted: false });
+  sendCtrl({
+    type: 'file-offer', id,
+    name: file.name, size: file.size,
+    mime: file.type || 'application/octet-stream'
+  });
+  sysLog('已发文书之请：' + file.name);
+}
+
+async function pumpQueue() {
+  if (sending) return;
+  const idx = sendQueue.findIndex(x => x.accepted);
+  if (idx === -1) return;
+  sending = true;
+  const item = sendQueue[idx];
+
+  const node = document.createElement('div');
+  node.className = 'file-card';
+  node.innerHTML =
+    '<div class="row"><div class="name">' + escapeHtml(item.file.name) + '</div>' +
+    '<div style="color:var(--paper-3)">发送中</div></div>' +
+    '<div class="meta">' + fmtSize(item.file.size) + '</div>' +
+    '<div class="bar"><i></i></div>';
+  $('log').appendChild(node);
+  $('log').scrollTop = $('log').scrollHeight;
+  const bar = node.querySelector('.bar i');
+
+  try {
+    await transferFile(item, bar);
+    node.querySelector('.row').lastElementChild.textContent = '已发';
+  } catch (e) {
+    node.querySelector('.row').lastElementChild.textContent = '失败';
+    toast('文书发送失败：' + e.message);
+  }
+
+  sendQueue = sendQueue.filter(x => x.id !== item.id);
+  sending = false;
+  if (sendQueue.some(x => x.accepted)) pumpQueue();
+}
+
+async function transferFile(item, bar) {
+  const dc = call.dcFile;
+  if (!dc || dc.readyState !== 'open') throw new Error('文路未启');
+
+  const file = item.file;
+  dc.send(JSON.stringify({
+    t: 'meta', id: item.id, name: file.name,
+    size: file.size, mime: file.type || 'application/octet-stream'
+  }));
+
+  let offset = 0;
+  while (offset < file.size) {
+    if (dc.readyState !== 'open') throw new Error('文路已闭');
+    if (dc.bufferedAmount > HIGH_WATER) {
+      await new Promise(res => {
+        const on = () => { dc.removeEventListener('bufferedamountlow', on); res(); };
+        dc.addEventListener('bufferedamountlow', on);
+        setTimeout(() => { dc.removeEventListener('bufferedamountlow', on); res(); }, 3000);
+      });
+    }
+    const slice = file.slice(offset, offset + CHUNK_SIZE);
+    const buf = await slice.arrayBuffer();
+    dc.send(buf);
+    offset += buf.byteLength;
+    if (bar) bar.style.width = Math.min(100, offset / file.size * 100) + '%';
+  }
+  dc.send(JSON.stringify({ t: 'end', id: item.id }));
+}
+
+/* ============================================================
+   文字
+   ============================================================ */
+$('btnSend').onclick = sendChat;
+$('chatInput').onkeydown = e => { if (e.key === 'Enter') sendChat(); };
+
+function sendChat() {
+  const input = $('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!sendCtrl({ type: 'chat', text })) return toast('文路未通');
+  logNode(text, 'me');
+  input.value = '';
+}
+
+/* ============================================================
+   通话控制
+   ============================================================ */
+$('btnVideo').onclick = () => startCall(selectedPeer, 'video');
+$('btnAudio').onclick = () => startCall(selectedPeer, 'audio');
+$('btnData').onclick  = () => startCall(selectedPeer, 'data');
+
+$('btnMute').onclick = () => {
+  if (!call || !call.localStream) return;
+  const track = call.localStream.getAudioTracks()[0];
+  if (!track) return;
+  track.enabled = !track.enabled;
+  $('btnMute').textContent = track.enabled ? '静音' : '开声';
+};
+
+$('btnScreen').onclick = async () => {
+  if (!call) return;
+  if (screenStream) {
+    screenStream.getTracks().forEach(t => t.stop());
+    screenStream = null;
+    $('btnScreen').textContent = '共享屏';
+    if (call.localStream) {
+      const vt = call.localStream.getVideoTracks()[0];
+      const sender = call.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+      if (sender && vt) await sender.replaceTrack(vt);
+    }
+    return;
+  }
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+    const st = screenStream.getVideoTracks()[0];
+    const sender = call.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+    if (sender) await sender.replaceTrack(st);
+    else call.pc.addTrack(st, screenStream);
+    st.onended = () => $('btnScreen').click();
+    $('btnScreen').textContent = '止共享';
+  } catch (e) {
+    toast('已取消共享');
+  }
+};
+
+$('btnHangup').onclick = () => {
+  if (!call) return;
+  if (call.state === 'inviting') {
+    send({ type: 'call:cancel', to: call.peer, callId: call.id });
+  } else {
+    send({ type: 'call:hangup', to: call.peer, callId: call.id });
+  }
+  cleanupCall(false);
+};
+
+function showStage() {
+  $('stageHint').style.display = 'none';
+  const local = $('localVideo');
+  if (call.localStream && call.localStream.getVideoTracks().length) {
+    local.srcObject = call.localStream;
+    local.style.display = 'block';
+  } else {
+    local.style.display = 'none';
+  }
+  $('remoteVideo').style.display = call.remoteStream.getTracks().length ? 'block' : 'none';
+}
+
+function cleanupCall(notify) {
+  if (!call) return;
+  if (notify) {
+    try { send({ type: 'call:hangup', to: call.peer, callId: call.id }); } catch (_) {}
+  }
+  try { if (call.pc) call.pc.close(); } catch (_) {}
+  if (call.localStream) call.localStream.getTracks().forEach(t => t.stop());
+  if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+
+  call = null;
+  sendQueue = [];
+  sending = false;
+  rxFile = null;
+
+  const rv = $('remoteVideo'), lv = $('localVideo');
+  rv.srcObject = null; rv.style.display = 'none';
+  lv.srcObject = null; lv.style.display = 'none';
+  $('stageHint').style.display = 'block';
+  $('btnScreen').textContent = '共享屏';
+  $('btnMute').textContent = '静音';
+  $('incomingMask').classList.remove('show');
+  $('fileMask').classList.remove('show');
+  updateButtons();
+}
+
+window.addEventListener('beforeunload', () => {
+  if (call) {
+    try { send({ type: 'call:hangup', to: call.peer, callId: call.id }); } catch (_) {}
+  }
+});
+
+/* ============================================================
+   启程
+   ============================================================ */
+boot();
+</script>
+</body>
+</html>
