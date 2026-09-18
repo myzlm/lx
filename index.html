@@ -36,7 +36,6 @@ body::before{
 ::-webkit-scrollbar-thumb{background:var(--ink-5)}
 ::-webkit-scrollbar-thumb:hover{background:var(--gold-4)}
 
-/* ---- 顶栏 ---- */
 .topbar{
   position:relative; z-index:5; flex:none;
   height:66px; display:flex; align-items:center; gap:14px;
@@ -110,7 +109,6 @@ body::before{
   background:rgba(201,169,97,.08);
 }
 
-/* ---- 主体 ---- */
 .grid{
   position:relative; z-index:1; flex:1; min-height:0;
   display:grid; grid-template-columns:252px 1fr 336px;
@@ -147,7 +145,6 @@ body::before{
 }
 .col-body{flex:1; overflow-y:auto; padding:9px; min-height:0}
 
-/* ---- 用户列表 ---- */
 .user-item{
   display:flex; align-items:center; gap:10px;
   padding:9px 10px; cursor:pointer; border-radius:2px;
@@ -163,13 +160,10 @@ body::before{
   width:16px; height:16px; flex:none;
   border:1px solid var(--gold-4); border-radius:2px;
   display:grid; place-items:center;
-  font-size:11px; color:transparent;
-  transition:.18s;
+  font-size:11px; color:transparent; transition:.18s;
 }
 .user-item.active .check{
-  background:var(--gold-3);
-  color:var(--ink-0);
-  border-color:var(--gold);
+  background:var(--gold-3); color:var(--ink-0); border-color:var(--gold);
 }
 .user-item .avatar{
   width:29px; height:29px; flex:none; display:grid; place-items:center;
@@ -192,7 +186,6 @@ body::before{
   color:var(--paper-3); font-family:var(--font-kai); letter-spacing:.16em;
 }
 
-/* ---- 舞台 ---- */
 .stage{
   flex:1; min-height:0; position:relative;
   display:flex; flex-direction:column;
@@ -200,10 +193,8 @@ body::before{
   overflow:hidden;
 }
 
-/* 聚焦主画面 */
 .focus-main{
-  display:none;
-  position:relative;
+  display:none; position:relative;
   flex:1; min-height:0;
   margin:8px 8px 4px;
   background:#000;
@@ -214,7 +205,6 @@ body::before{
 }
 .stage.focused .focus-main{display:block}
 .stage.focused .hint{display:none !important}
-
 .focus-main video{
   width:100%; height:100%; object-fit:contain; display:block; background:#000;
 }
@@ -229,14 +219,10 @@ body::before{
   max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .focus-main .focus-actions{
-  position:absolute; top:12px; right:12px;
-  display:flex; gap:8px;
+  position:absolute; top:12px; right:12px; display:flex; gap:8px;
 }
-.focus-main .focus-actions button{
-  padding:5px 12px; font-size:12px;
-}
+.focus-main .focus-actions button{padding:5px 12px; font-size:12px}
 
-/* 视频网格 */
 .stage-grid{
   position:relative; flex:1; min-height:0;
   display:grid; gap:8px; padding:8px;
@@ -248,31 +234,21 @@ body::before{
 }
 .stage-grid:empty{display:none}
 
-/* 聚焦模式下的网格：变横向缩略图条 */
 .stage.focused .stage-grid{
   flex:none;
-  display:flex;
-  flex-direction:row;
-  gap:6px;
-  height:104px;
-  padding:4px 8px 8px;
-  overflow-x:auto;
-  overflow-y:hidden;
+  display:flex; flex-direction:row; gap:6px;
+  height:104px; padding:4px 8px 8px;
+  overflow-x:auto; overflow-y:hidden;
   align-items:stretch;
 }
 .stage.focused .stage-grid .tile{
-  flex:none;
-  width:148px;
-  height:88px;
-  min-height:0;
+  flex:none; width:148px; height:88px; min-height:0;
 }
 .stage.focused .stage-grid .tile .tile-label{
   font-size:11px; left:5px; bottom:5px; padding:1px 6px;
   max-width:calc(100% - 44px);
 }
-.stage.focused .stage-grid .tile .tile-state{
-  font-size:9px; padding:1px 5px;
-}
+.stage.focused .stage-grid .tile .tile-state{font-size:9px; padding:1px 5px}
 .stage.focused .stage-grid .tile .tile-focus{display:none}
 .stage.focused .stage-grid .tile:hover{
   border-color:var(--gold-2);
@@ -297,7 +273,6 @@ body::before{
 .tile.self video{transform:scaleX(-1)}
 .tile.sharing video{object-fit:contain; transform:none}
 .tile.self.sharing video{transform:none}
-
 .tile .tile-label{
   position:absolute; left:8px; bottom:8px;
   padding:2px 9px;
@@ -312,7 +287,6 @@ body::before{
 .tile .tile-label .share-tag{
   color:var(--cinnabar-2); margin-left:4px; font-size:10px;
 }
-
 .tile .tile-state{
   position:absolute; right:8px; top:8px;
   padding:2px 7px;
@@ -325,7 +299,6 @@ body::before{
 }
 .tile .tile-state.ok{color:var(--ok)}
 .tile .tile-state.bad{color:var(--err)}
-
 .tile .tile-focus{
   position:absolute; right:8px; top:36px;
   width:24px; height:24px; padding:0;
@@ -346,7 +319,6 @@ body::before{
 }
 .tile.self .tile-focus{display:none}
 
-/* 网格工具条 */
 .stage-tools{
   flex:none;
   display:flex; align-items:center; gap:10px;
@@ -395,7 +367,6 @@ body::before{
   background:linear-gradient(90deg,transparent,var(--gold-3),transparent);
 }
 
-/* 控制条 */
 .controls{
   flex:none; display:flex; gap:9px; justify-content:center; flex-wrap:wrap;
   padding:14px; border-top:1px solid var(--gold-4);
@@ -439,7 +410,6 @@ button.active{
   box-shadow:0 0 18px rgba(201,169,97,.35), inset 0 0 16px rgba(201,169,97,.15);
 }
 
-/* ---- 连线成员栏 ---- */
 .members-bar{
   flex:none;
   display:flex; flex-wrap:wrap; gap:6px;
@@ -493,7 +463,6 @@ button.active{
   50%{opacity:.4}
 }
 
-/* ---- 消息区 ---- */
 .log{
   flex:1; min-height:0; overflow-y:auto; padding:14px;
   display:flex; flex-direction:column; gap:10px;
@@ -571,7 +540,6 @@ button.active{
 }
 .composer input[type=text]::placeholder{color:var(--paper-3); letter-spacing:.1em}
 
-/* ---- 弹窗 ---- */
 .mask{
   position:fixed; inset:0; z-index:100; padding:20px;
   display:none; place-items:center;
@@ -648,7 +616,6 @@ button.active{
   color:var(--gold-2); background:rgba(201,169,97,.1);
 }
 
-/* ---- 浮言 ---- */
 #toasts{
   position:fixed; top:84px; left:50%; transform:translateX(-50%);
   z-index:300; display:flex; flex-direction:column; gap:9px;
@@ -670,7 +637,6 @@ button.active{
 .toast.info{color:var(--paper-2); border-color:var(--ink-5)}
 @keyframes toastIn{from{opacity:0; transform:translateY(-12px)}}
 
-/* ---- 小屏 ---- */
 @media(max-width:920px){
   .grid{
     grid-template-columns:1fr; grid-template-rows:auto minmax(220px,1fr) auto;
@@ -695,7 +661,6 @@ button.active{
 </head>
 <body>
 
-<!-- ══════════ 顶栏 ══════════ -->
 <header class="topbar">
   <div class="seal-badge">墨</div>
   <div class="brand">
@@ -711,9 +676,7 @@ button.active{
   <button class="auth-btn ghost" id="logoutBtn" style="display:none;">登 出</button>
 </header>
 
-<!-- ══════════ 主体 ══════════ -->
 <main class="grid">
-
   <section class="col users">
     <div class="col-head">
       <span class="t">在 线 用 户</span>
@@ -726,7 +689,6 @@ button.active{
 
   <section class="col stage-col">
     <div class="stage" id="stage">
-      <!-- 聚焦主画面 -->
       <div class="focus-main" id="focusMain">
         <video id="focusVideo" autoplay playsinline></video>
         <div class="focus-label" id="focusLabel">—</div>
@@ -779,10 +741,8 @@ button.active{
       <input type="file" id="fileInput" hidden multiple>
     </div>
   </section>
-
 </main>
 
-<!-- ══════════ 来电 ══════════ -->
 <div class="mask" id="incomingMask">
   <div class="dialog">
     <h3>有 客 来 电</h3>
@@ -794,7 +754,6 @@ button.active{
   </div>
 </div>
 
-<!-- ══════════ 收书 ══════════ -->
 <div class="mask" id="fileMask">
   <div class="dialog">
     <h3>有 书 相 赠</h3>
@@ -806,7 +765,6 @@ button.active{
   </div>
 </div>
 
-<!-- ══════════ 登录 ══════════ -->
 <div class="mask" id="loginMask">
   <div class="dialog login-dialog">
     <button class="close-btn" id="btnCloseLogin" aria-label="关闭">×</button>
@@ -864,7 +822,7 @@ let onlineUsers = [];
 let selectedPeers = new Set();
 let groupCall = null;
 let reconnectTimer = null;
-let focusedPeer = null;    // 当前聚焦的用户名（null 表示未聚焦）
+let focusedPeer = null;
 
 let sendQueue = [];
 const activeTasks = new Set();
@@ -968,7 +926,7 @@ async function fetchCsrf() {
 }
 
 /* ============================================================
-   消息区
+   消息
    ============================================================ */
 function logNode(text, cls, who = null) {
   const d = document.createElement('div');
@@ -1162,23 +1120,37 @@ function handleSignal(msg) {
         iceServers = msg.iceServers;
       }
       break;
+
     case 'presence':
       onlineUsers = (msg.users || []).filter(u => u !== (me && me.username));
       for (const p of [...selectedPeers]) {
         if (onlineUsers.indexOf(p) === -1) selectedPeers.delete(p);
       }
+      // 关键修复：若通话中的成员已经离线（关浏览器/断网），
+      // 立刻从通话中移除并删除他的画面
+      if (groupCall) {
+        for (const peer of [...groupCall.peers]) {
+          if (onlineUsers.indexOf(peer) === -1) {
+            removePeer(peer, '已离线');
+          }
+        }
+      }
       renderUsers();
       updateButtons();
       break;
+
     case 'peer:offline':
-      toast('「' + msg.to + '」已离线', 'error');
       if (groupCall && groupCall.peers.has(msg.to)) {
-        removePeer(msg.to, '离线');
+        removePeer(msg.to, '已离线');
+      } else {
+        toast('「' + msg.to + '」已离线', 'error');
       }
       break;
+
     case 'error':
       toast(msg.error || '服务端异常', 'error');
       break;
+
     case 'call:invite':   onIncoming(msg); break;
     case 'call:accept':   onAccepted(msg); break;
     case 'call:members':  onMembers(msg); break;
@@ -1419,29 +1391,45 @@ function onLeave(msg) {
   const peer = msg.from;
   if (groupCall.peers.has(peer)) {
     removePeer(peer, '离席');
+  } else {
+    // 即使不在 peers 集合里（例如刚被邀请还没接通），也清理 UI 残留
+    purgePeerUI(peer);
   }
 }
 
-/* 统一的移除 peer 处理，带提示 */
+/* ---- 统一的移除 peer：清理连接 + UI + 提示 ---- */
 function removePeer(peer, reason) {
   if (!groupCall) return;
-  if (!groupCall.peers.has(peer)) return;
+  const inPeers = groupCall.peers.has(peer);
+  const inInvited = groupCall.invited.has(peer);
 
   closePeer(peer);
-  groupCall.peers.delete(peer);
+  if (inPeers) groupCall.peers.delete(peer);
+  if (inInvited) groupCall.invited.delete(peer);
 
-  sysLog('「' + peer + '」' + reason, 'leave');
-  toast(peer + ' ' + reason, 'error');
-
-  // 如果被移除的正是当前聚焦的人 → 退出聚焦
-  if (focusedPeer === peer) {
-    unfocusPeer();
+  if (inPeers || inInvited) {
+    sysLog('「' + peer + '」' + reason, 'leave');
+    toast(peer + ' ' + reason, 'error');
   }
+
+  if (focusedPeer === peer) unfocusPeer();
 
   renderVideoGrid();
   renderMembers();
   updateButtons();
-  broadcastMembers();
+
+  // 若还有人在，广播最新成员列表
+  if (inPeers) broadcastMembers();
+
+  // 通话已空（没有参与者，也没有待接受邀请）→ 自动结束
+  if (groupCall && groupCall.peers.size === 0 && groupCall.invited.size === 0) {
+    setTimeout(() => {
+      if (groupCall && groupCall.peers.size === 0 && groupCall.invited.size === 0) {
+        sysLog('连线已结束');
+        cleanupGroupCall();
+      }
+    }, 900);
+  }
 }
 
 /* ============================================================
@@ -1502,10 +1490,8 @@ function ensurePeerConnection(peer, isInitiator) {
     }
   };
 
-  // 关键修复：正确处理视频轨道替换
   pc.ontrack = ev => {
     const t = ev.track;
-    // 移除同类旧轨道（避免共享结束后残留旧轨）
     const sameKind = conn.remoteStream.getTracks().filter(x => x.kind === t.kind);
     for (const old of sameKind) {
       if (old !== t) {
@@ -1516,7 +1502,6 @@ function ensurePeerConnection(peer, isInitiator) {
       conn.remoteStream.addTrack(t);
     }
     updatePeerVideo(peer, conn.remoteStream);
-    // 若当前正聚焦该 peer，同步刷新主画面
     if (focusedPeer === peer) {
       const fv = $('focusVideo');
       if (fv && fv.srcObject !== conn.remoteStream) {
@@ -1533,6 +1518,10 @@ function ensurePeerConnection(peer, isInitiator) {
     if (st === 'connected') updateTileState(peer, '已通', 'ok');
     else if (st === 'failed' || st === 'closed') updateTileState(peer, '中断', 'bad');
     else if (st === 'disconnected') updateTileState(peer, '不稳', 'bad');
+    // 连接彻底关闭 → 视为离席
+    if (st === 'closed' && groupCall && groupCall.peers.has(peer)) {
+      removePeer(peer, '已断开');
+    }
     renderMembers();
   };
 
@@ -1551,18 +1540,42 @@ function ensurePeerConnection(peer, isInitiator) {
   return conn;
 }
 
+/* ---- 关闭与 peer 的连接：无论连接是否存在都清理 UI ---- */
 function closePeer(peer) {
   if (!groupCall) return;
   const conn = groupCall.connections.get(peer);
-  if (!conn) return;
-  try { conn.pc.close(); } catch (_) {}
-  if (conn.dcCtrl) try { conn.dcCtrl.close(); } catch (_) {}
-  if (conn.dcFile) try { conn.dcFile.close(); } catch (_) {}
-  groupCall.connections.delete(peer);
-  sendQueue = sendQueue.filter(x => x.peer !== peer);
-  rxFileByPeer.delete(peer);
-  const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
-  if (tile) tile.remove();
+  if (conn) {
+    try { conn.pc.close(); } catch (_) {}
+    if (conn.dcCtrl) try { conn.dcCtrl.close(); } catch (_) {}
+    if (conn.dcFile) try { conn.dcFile.close(); } catch (_) {}
+    // 清空远程流，避免 video 元素继续持有已废弃的流
+    try {
+      conn.remoteStream.getTracks().forEach(t => { try { t.stop(); } catch (_) {} });
+    } catch (_) {}
+    groupCall.connections.delete(peer);
+    sendQueue = sendQueue.filter(x => x.peer !== peer);
+    rxFileByPeer.delete(peer);
+  }
+  // 关键修复：无论 conn 是否存在，都清除该 peer 的 tile
+  purgePeerUI(peer);
+}
+
+/* ---- 强制清除某 peer 的 UI 残留 ---- */
+function purgePeerUI(peer) {
+  const tile = document.querySelector(
+    '.tile[data-peer="' + cssEscape(peer) + '"]');
+  if (tile) {
+    const v = tile.querySelector('video');
+    if (v) {
+      try { v.pause(); } catch (_) {}
+      v.srcObject = null;
+      // 强制重新加载，防止某些浏览器保留旧画面
+      try { v.load && v.load(); } catch (_) {}
+    }
+    tile.remove();
+  }
+  // 若聚焦的是这个人，退出聚焦
+  if (focusedPeer === peer) unfocusPeer();
 }
 
 async function onRemoteOffer(msg) {
@@ -1709,16 +1722,13 @@ function renderVideoGrid() {
         '<div class="tile-label">' + escapeHtml(peer) + '</div>' +
         '<div class="tile-state">连接中</div>' +
         '<button class="tile-focus" title="聚焦此画面">⤢</button>';
-      // 点击聚焦按钮
       tile.querySelector('.tile-focus').addEventListener('click', ev => {
         ev.stopPropagation();
         focusPeer(peer);
       });
-      // 双击 tile 也能聚焦
       tile.addEventListener('dblclick', () => focusPeer(peer));
       grid.appendChild(tile);
     }
-    // 同步该 peer 的 remoteStream
     const conn = groupCall.connections.get(peer);
     if (conn) {
       const v = tile.querySelector('video');
@@ -1727,7 +1737,6 @@ function renderVideoGrid() {
         v.play().catch(() => {});
       }
       tile.classList.toggle('sharing', !!conn.isSharing);
-      // 更新共享标记
       const label = tile.querySelector('.tile-label');
       if (label) {
         const base = escapeHtml(peer);
@@ -1742,7 +1751,11 @@ function renderVideoGrid() {
   for (const tile of [...grid.querySelectorAll('.tile[data-peer]')]) {
     const p = tile.dataset.peer;
     if (p === me.username) continue;
-    if (!groupCall.peers.has(p)) tile.remove();
+    if (!groupCall.peers.has(p)) {
+      const v = tile.querySelector('video');
+      if (v) { try { v.pause(); } catch (_) {} v.srcObject = null; }
+      tile.remove();
+    }
   }
 
   tryPlayAllVideos();
@@ -1785,15 +1798,12 @@ function focusPeer(peer) {
 
   const fv = $('focusVideo');
   const label = $('focusLabel');
-  const selfTile = document.querySelector('.tile.self');
 
-  // 静音所有网格里的视频
   document.querySelectorAll('.stage-grid .tile video').forEach(v => {
     v.muted = true;
   });
 
   if (peer === me.username) {
-    // 聚焦自己
     fv.srcObject = groupCall.localStream;
     fv.muted = true;
     label.textContent = '我';
@@ -1806,12 +1816,10 @@ function focusPeer(peer) {
   }
   fv.play().catch(() => {});
 
-  // 标记聚焦的 tile
   document.querySelectorAll('.tile').forEach(t => t.classList.remove('focused'));
   const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
   if (tile) tile.classList.add('focused');
 
-  // 聚焦时隐藏缩放工具
   $('stageTools').classList.add('hidden');
 }
 
@@ -1823,12 +1831,10 @@ function unfocusPeer() {
     fv.srcObject = null;
     fv.muted = false;
   }
-  // 恢复网格声音
   document.querySelectorAll('.stage-grid .tile video').forEach(v => {
     v.muted = false;
   });
   document.querySelectorAll('.tile').forEach(t => t.classList.remove('focused'));
-  // 重新显示缩放工具（若有连线）
   if (groupCall && groupCall.peers.size > 0) {
     $('stageTools').classList.remove('hidden');
   }
@@ -1848,7 +1854,6 @@ $('btnFocusFs').onclick = () => {
   }
 };
 
-// 缩放滑块
 $('scaleRange').oninput = e => {
   const v = parseFloat(e.target.value);
   $('scaleVal').textContent = v.toFixed(1) + '×';
@@ -1884,7 +1889,6 @@ function bindCtrl(ch, peer) {
       sendQueue = sendQueue.filter(x => !(x.id === m.id && x.peer === peer));
       sysLog(peer + ' 辞谢文书：' + (m.name || ''));
     } else if (m.type === 'screen-start') {
-      // 对端开始共享屏幕
       const conn = groupCall && groupCall.connections.get(peer);
       if (conn) conn.isSharing = true;
       const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
@@ -1895,12 +1899,10 @@ function bindCtrl(ch, peer) {
       }
       sysLog('「' + peer + '」开始共享屏幕');
       renderMembers();
-      // 若正聚焦该 peer，更新标签
       if (focusedPeer === peer) {
         $('focusLabel').textContent = peer + ' · 共享屏中';
       }
     } else if (m.type === 'screen-end') {
-      // 对端停止共享屏幕
       const conn = groupCall && groupCall.connections.get(peer);
       if (conn) conn.isSharing = false;
       const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
@@ -1908,11 +1910,8 @@ function bindCtrl(ch, peer) {
         tile.classList.remove('sharing');
         const label = tile.querySelector('.tile-label');
         if (label) label.textContent = peer;
-        // 关键：强制刷新视频元素，清除残留的屏幕画面
         const v = tile.querySelector('video');
-        if (v) {
-          v.load && v.load();
-        }
+        if (v) { try { v.load && v.load(); } catch (_) {} }
       }
       sysLog('「' + peer + '」已停止共享');
       renderMembers();
@@ -2178,7 +2177,6 @@ $('btnMute').onclick = () => {
   $('btnMute').classList.toggle('active', !track.enabled);
 };
 
-/* ---- 屏幕共享 ---- */
 $('btnScreen').onclick = async () => {
   if (!groupCall || groupCall.peers.size === 0) return;
   if (groupCall.screenStream) { await stopScreenShare(); return; }
@@ -2228,7 +2226,6 @@ $('btnScreen').onclick = async () => {
 
     groupCall.screenTrack = screenTrack;
 
-    // 本地预览
     const selfTile = document.querySelector('.tile.self');
     if (selfTile) {
       selfTile.classList.add('sharing');
@@ -2237,7 +2234,6 @@ $('btnScreen').onclick = async () => {
       v.play().catch(() => {});
     }
 
-    // 通知其他 peer
     broadcastCtrl({ type: 'screen-start' });
 
     screenTrack.onended = () => { stopScreenShare(); };
@@ -2260,12 +2256,10 @@ async function stopScreenShare() {
   const cameraTrack = groupCall.localStream
     ? groupCall.localStream.getVideoTracks()[0] : null;
 
-  // 关键顺序：先替换回摄像头，再停止屏幕轨道
   let needRenegotiate = false;
   for (const [, conn] of groupCall.connections) {
     const sender = conn.pc.getSenders().find(s => s.track && s.track.kind === 'video');
     if (!sender) continue;
-
     if (cameraTrack) {
       try { await sender.replaceTrack(cameraTrack); } catch (e) { console.warn(e); }
       tuneVideoSender(sender);
@@ -2275,7 +2269,6 @@ async function stopScreenShare() {
     }
   }
 
-  // 停止屏幕流
   if (groupCall.screenStream) {
     try { groupCall.screenStream.getTracks().forEach(t => t.stop()); } catch (_) {}
     groupCall.screenStream = null;
@@ -2286,10 +2279,8 @@ async function stopScreenShare() {
     try { await renegotiateAll(); } catch (_) {}
   }
 
-  // 通知其他 peer
   broadcastCtrl({ type: 'screen-end' });
 
-  // 恢复本地预览
   const selfTile = document.querySelector('.tile.self');
   if (selfTile) {
     selfTile.classList.remove('sharing');
@@ -2309,7 +2300,6 @@ async function stopScreenShare() {
   toast('已停止共享', 'info');
 }
 
-/* ---- 挂断 ---- */
 $('btnHangup').onclick = () => {
   if (!groupCall) return;
   for (const peer of groupCall.peers) {
@@ -2346,7 +2336,13 @@ function cleanupGroupCall(notify = false) {
 
   unfocusPeer();
 
-  $('stageGrid').innerHTML = '';
+  // 清空舞台
+  const grid = $('stageGrid');
+  for (const v of grid.querySelectorAll('video')) {
+    try { v.pause(); } catch (_) {}
+    v.srcObject = null;
+  }
+  grid.innerHTML = '';
   $('stageHint').style.display = 'flex';
   $('stageTools').classList.add('hidden');
   $('btnScreen').textContent = '共享屏';
