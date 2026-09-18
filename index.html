@@ -43,8 +43,8 @@ body::before{
    ============================================================ */
 .topbar{
   position:relative; z-index:5; flex:none;
-  height:66px; display:flex; align-items:center; gap:16px;
-  padding:0 24px;
+  height:66px; display:flex; align-items:center; gap:14px;
+  padding:0 22px;
   background:linear-gradient(180deg,var(--ink-2),var(--ink-1));
   border-bottom:1px solid var(--gold-4);
   box-shadow:0 1px 0 rgba(201,169,97,.13), 0 8px 28px rgba(0,0,0,.55);
@@ -91,6 +91,27 @@ body::before{
   letter-spacing:.14em; padding:5px 14px;
   border:1px solid var(--gold-4); border-radius:2px;
   background:rgba(201,169,97,.045);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  max-width:200px;
+}
+.auth-btn{
+  font-family:var(--font-kai); font-size:13px; letter-spacing:.16em;
+  color:var(--gold-2);
+  background:linear-gradient(180deg,#4b3b1a,#332816);
+  border:1px solid var(--gold-3); border-radius:2px;
+  padding:6px 16px; cursor:pointer; transition:.18s;
+}
+.auth-btn:hover{
+  background:linear-gradient(180deg,#5d4920,#3e3018);
+  box-shadow:0 0 20px rgba(201,169,97,.32), inset 0 0 16px rgba(201,169,97,.12);
+}
+.auth-btn.ghost{
+  background:transparent; color:var(--paper-2);
+  border-color:var(--ink-5);
+}
+.auth-btn.ghost:hover{
+  color:var(--gold-2); border-color:var(--gold-4);
+  background:rgba(201,169,97,.08);
 }
 
 /* ============================================================
@@ -345,12 +366,66 @@ button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
 .dialog p{color:var(--paper-2); font-size:13px; margin-bottom:24px; letter-spacing:.08em}
 .dialog .actions{display:flex; gap:12px; justify-content:center}
 
+/* ---- 登录弹窗专属 ---- */
+.login-dialog{
+  width:min(400px,100%);
+  padding:36px 32px 28px;
+  text-align:left;
+}
+.login-dialog h3{
+  text-align:center; margin-bottom:26px;
+  font-size:20px;
+}
+.login-dialog .field{margin-bottom:18px}
+.login-dialog .field label{
+  display:block; font-family:var(--font-kai);
+  font-size:12px; letter-spacing:.18em;
+  color:var(--paper-3); margin-bottom:7px;
+}
+.login-dialog .field input{
+  width:100%; font-family:var(--font-serif); font-size:14px;
+  color:var(--paper); background:var(--ink-1);
+  border:1px solid var(--gold-4); border-radius:2px;
+  padding:10px 13px; outline:none; transition:.18s;
+  letter-spacing:.04em;
+}
+.login-dialog .field input:focus{
+  border-color:var(--gold-3);
+  box-shadow:0 0 0 1px rgba(201,169,97,.18),
+             inset 0 0 14px rgba(201,169,97,.06);
+}
+.login-dialog .field input::placeholder{
+  color:var(--paper-3); letter-spacing:.1em;
+}
+.login-dialog .submit-row{
+  margin-top:24px; display:flex; gap:12px;
+}
+.login-dialog .submit-row button{
+  flex:1; padding:10px 0; font-size:14px; letter-spacing:.32em;
+}
+.login-dialog .tip{
+  text-align:center; margin-top:20px; margin-bottom:0;
+  font-size:12px; color:var(--paper-3);
+  font-family:var(--font-kai); letter-spacing:.14em;
+}
+.login-dialog .close-btn{
+  position:absolute; top:12px; right:14px;
+  width:28px; height:28px; padding:0;
+  font-size:20px; line-height:1; color:var(--paper-3);
+  background:transparent; border:none; cursor:pointer;
+  border-radius:2px; transition:.18s;
+  font-family:var(--font-serif);
+}
+.login-dialog .close-btn:hover{
+  color:var(--gold-2); background:rgba(201,169,97,.1);
+}
+
 /* ============================================================
    浮言
    ============================================================ */
 #toasts{
   position:fixed; top:84px; left:50%; transform:translateX(-50%);
-  z-index:200; display:flex; flex-direction:column; gap:9px;
+  z-index:300; display:flex; flex-direction:column; gap:9px;
   align-items:center; pointer-events:none;
 }
 .toast{
@@ -360,6 +435,16 @@ button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
   border:1px solid var(--gold-3);
   box-shadow:0 10px 34px rgba(0,0,0,.75), 0 0 22px rgba(201,169,97,.12);
   animation:toastIn .26s ease;
+}
+.toast.error{
+  color:#e8b2aa; border-color:var(--cinnabar);
+  box-shadow:0 10px 34px rgba(0,0,0,.75), 0 0 22px rgba(158,43,37,.28);
+}
+.toast.success{
+  color:var(--gold-2); border-color:var(--gold-3);
+}
+.toast.info{
+  color:var(--paper-2); border-color:var(--ink-5);
 }
 @keyframes toastIn{from{opacity:0; transform:translateY(-12px)}}
 
@@ -373,13 +458,14 @@ button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
   }
   .col.users .col-body{max-height:126px}
   .col.chat .log{max-height:170px}
-  .topbar{height:58px; padding:0 14px; gap:11px}
+  .topbar{height:58px; padding:0 12px; gap:9px}
   .brand h1{font-size:17px; letter-spacing:.16em}
   .brand .tagline{display:none}
   .seal-badge{width:34px; height:34px; font-size:20px}
   .status-pill .txt{display:none}
   .status-pill{padding:5px 9px}
-  .user-pill{font-size:12px; padding:4px 10px}
+  .user-pill{font-size:12px; padding:4px 10px; max-width:120px}
+  .auth-btn{padding:5px 11px; font-size:12px; letter-spacing:.1em}
   button{padding:7px 12px; font-size:12.5px; letter-spacing:.1em}
   #localVideo{width:120px; right:11px; bottom:11px}
 }
@@ -396,9 +482,11 @@ button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
   </div>
   <div class="spacer"></div>
   <div class="status-pill">
-    <i class="dot" id="dot"></i><span class="txt" id="statusText">连接中</span>
+    <i class="dot" id="dot"></i><span class="txt" id="statusText">未连接</span>
   </div>
-  <div class="user-pill" id="meText">—</div>
+  <div class="user-pill" id="meText">未登录 · 游客</div>
+  <button class="auth-btn" id="loginBtn">登 录</button>
+  <button class="auth-btn ghost" id="logoutBtn" style="display:none;">登 出</button>
 </header>
 
 <!-- ══════════ 主体 ══════════ -->
@@ -411,7 +499,7 @@ button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
       <span class="n" id="onlineCount">0</span>
     </div>
     <div class="col-body" id="userList">
-      <div class="empty">暂无同门在线</div>
+      <div class="empty">请先登录 · 方见同道</div>
     </div>
   </section>
 
@@ -478,6 +566,26 @@ button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
   </div>
 </div>
 
+<!-- ══════════ 登录 ══════════ -->
+<div class="mask" id="loginMask">
+  <div class="dialog login-dialog">
+    <button class="close-btn" id="btnCloseLogin" aria-label="关闭">×</button>
+    <h3>登 录 书 斋</h3>
+    <div class="field">
+      <label for="loginUser">账 号</label>
+      <input type="text" id="loginUser" placeholder="请输入账号" autocomplete="username" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="loginPass">密 码</label>
+      <input type="password" id="loginPass" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <div class="submit-row">
+      <button class="primary" id="btnSubmitLogin">登 录</button>
+    </div>
+    <p class="tip">游客可浏览 · 登录后可通话传书</p>
+  </div>
+</div>
+
 <div id="toasts"></div>
 
 <script>
@@ -508,6 +616,7 @@ let rxFile = null;
 let pendingIncoming = null;
 let pendingFileOffer = null;
 let screenStream = null;
+let connecting = false;
 
 const $ = id => document.getElementById(id);
 const rand = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -519,9 +628,9 @@ const rand = () => (crypto.randomUUID ? crypto.randomUUID()
 /* ============================================================
    工具
    ============================================================ */
-function toast(text, ms = 2600) {
+function toast(text, type = 'info', ms = 2600) {
   const el = document.createElement('div');
-  el.className = 'toast';
+  el.className = 'toast ' + type;
   el.textContent = text;
   $('toasts').appendChild(el);
   setTimeout(() => el.remove(), ms);
@@ -541,22 +650,65 @@ function setStatus(text, ok) {
   $('statusText').textContent = text;
   $('dot').classList.toggle('on', !!ok);
 }
+function roleText(r) {
+  return ({ owner: '主人', admin: '管事', member: '同门' })[r] || r;
+}
 
+/* ============================================================
+   统一请求封装（自动携带 Cookie 与 CSRF）
+   ============================================================ */
 async function api(path, opts = {}) {
+  const method = (opts.method || 'GET').toUpperCase();
   const headers = Object.assign({}, opts.headers || {});
-  if (opts.body && typeof opts.body === 'string') headers['Content-Type'] = 'application/json';
-  if (opts.method && opts.method !== 'GET') headers['X-CSRF-Token'] = csrf;
+  const isWrite = !['GET', 'HEAD', 'OPTIONS'].includes(method);
 
-  const res = await fetch(API_BASE + path, {
+  if (isWrite) {
+    if (csrf) headers['X-CSRF-Token'] = csrf;
+    if (opts.body && typeof opts.body === 'string'
+        && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+  }
+
+  const cfg = Object.assign({}, opts, {
+    method,
+    headers,
     credentials: 'include',
-    mode: 'cors',
-    ...opts,
-    headers
+    mode: 'cors'
   });
+
+  const res = await fetch(API_BASE + path, cfg);
+
   let data = null;
   try { data = await res.json(); } catch (_) {}
-  if (!res.ok) throw new Error((data && data.error) || ('请求失败 ' + res.status));
+
+  if (!res.ok) {
+    // CSRF 失效则刷新一次再试
+    if (isWrite && res.status === 403 && data
+        && typeof data.error === 'string'
+        && data.error.indexOf('CSRF') !== -1) {
+      try { await fetchCsrf(); } catch (_) {}
+      headers['X-CSRF-Token'] = csrf;
+      const retry = await fetch(API_BASE + path,
+        Object.assign({}, cfg, { headers }));
+      let d2 = null;
+      try { d2 = await retry.json(); } catch (_) {}
+      if (retry.ok) return d2;
+      throw new Error((d2 && d2.error) || ('请求失败 ' + retry.status));
+    }
+    throw new Error((data && data.error) || ('请求失败 ' + res.status));
+  }
   return data;
+}
+
+async function fetchCsrf() {
+  const res = await fetch(API_BASE + '/api/csrf', {
+    credentials: 'include',
+    mode: 'cors'
+  });
+  if (!res.ok) return;
+  const data = await res.json().catch(() => null);
+  if (data && data.csrfToken) csrf = data.csrfToken;
 }
 
 /* ============================================================
@@ -573,44 +725,121 @@ function logNode(text, cls) {
 function sysLog(text) { logNode(text, 'sys'); }
 
 /* ============================================================
-   启动
+   登录模块
    ============================================================ */
-async function boot() {
+function updateLoginUI(loggedIn) {
+  const loginBtn = $('loginBtn');
+  const logoutBtn = $('logoutBtn');
+  const meText = $('meText');
+
+  if (loggedIn && me) {
+    meText.textContent = me.username + ' · ' + roleText(me.role);
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+  } else {
+    meText.textContent = '未登录 · 游客';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+  }
+}
+
+function openLoginModal() {
+  $('loginUser').value = '';
+  $('loginPass').value = '';
+  $('loginMask').classList.add('show');
+  setTimeout(() => { $('loginUser').focus(); }, 120);
+}
+function closeLoginModal() {
+  $('loginMask').classList.remove('show');
+}
+
+async function submitLogin() {
+  const username = $('loginUser').value.trim();
+  const password = $('loginPass').value;
+
+  if (!username || !password) {
+    toast('请输入账号和密码', 'error');
+    return;
+  }
+
+  const btn = $('btnSubmitLogin');
+  btn.disabled = true;
+  btn.textContent = '登 录 中';
+
   try {
-    me = await api('/api/me');
+    const data = await api('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    me = {
+      username: data.username,
+      role: data.role,
+      mustChangePassword: !!data.mustChangePassword
+    };
+    csrf = data.csrfToken || '';
+
+    updateLoginUI(true);
+    closeLoginModal();
+    toast('欢迎回来，' + data.username, 'success');
+
+    // 登录成功后建立 WebSocket 连接
+    await connect();
   } catch (e) {
-    setStatus('无法连接', false);
-    toast('无法连接服务器');
-    return;
+    toast(e.message || '登录失败', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '登 录';
   }
-  if (!me) {
-    $('meText').textContent = '未登录';
-    setStatus('待登录', false);
-    document.body.insertAdjacentHTML('beforeend',
-      '<div class="mask show"><div class="dialog"><h3>尚 未 登 录</h3>' +
-      '<p>请先前往主站登录后再使用连线功能</p>' +
-      '<div class="actions">' +
-      '<button class="primary" onclick="location.href=\'' + API_BASE + '\'">前往主站</button>' +
-      '</div></div></div>');
-    return;
-  }
-  csrf = me.csrfToken;
-  $('meText').textContent = me.username + ' · ' + roleText(me.role);
-  await connect();
 }
 
-function roleText(r) {
-  return ({ owner: '主人', admin: '管事', member: '同门' })[r] || r;
+async function doLogout() {
+  try {
+    await api('/api/logout', { method: 'POST' });
+  } catch (_) {}
+
+  me = null;
+  csrf = '';
+  updateLoginUI(false);
+
+  // 断开 WebSocket，清理通话
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if (ws) { try { ws.close(); } catch (_) {} ws = null; }
+  cleanupCall(false);
+
+  onlineUsers = [];
+  selectedPeer = null;
+  renderUsers();
+  $('peerLabel').textContent = '—';
+  $('log').innerHTML = '';
+  setStatus('未连接', false);
+  toast('已登出', 'info');
 }
 
+/* ============================================================
+   WebSocket 连接
+   ============================================================ */
 async function connect() {
-  clearTimeout(reconnectTimer);
+  if (!me) return;
+  if (connecting) return;
+  if (ws && ws.readyState === 1) return;
+
+  connecting = true;
+  setStatus('连接中', false);
+
   try {
     const t = await api('/api/rtc/ticket', { method: 'POST' });
+    if (t && Array.isArray(t.iceServers) && t.iceServers.length) {
+      iceServers = t.iceServers;
+    }
     openWS(t.token);
   } catch (e) {
     setStatus('凭证失败', false);
-    reconnectTimer = setTimeout(connect, 5000);
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => { connecting = false; connect(); }, 5000);
+  } finally {
+    setTimeout(() => { connecting = false; }, 800);
   }
 }
 
@@ -618,7 +847,9 @@ function openWS(ticket) {
   try { if (ws) ws.close(); } catch (_) {}
   ws = new WebSocket(WS_URL + '?ticket=' + encodeURIComponent(ticket));
 
-  ws.onopen = () => setStatus('已 通', true);
+  ws.onopen = () => {
+    setStatus('已 通', true);
+  };
 
   ws.onmessage = ev => {
     let msg;
@@ -629,8 +860,13 @@ function openWS(ticket) {
   ws.onclose = () => {
     setStatus('已 断', false);
     cleanupCall(true);
-    reconnectTimer = setTimeout(connect, 3000);
+    if (me) {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(() => { connect(); }, 3000);
+    }
   };
+
+  ws.onerror = () => { /* onclose 处理重连 */ };
 }
 
 function send(obj) {
@@ -652,8 +888,14 @@ function handleSignal(msg) {
       break;
 
     case 'presence':
-      onlineUsers = (msg.users || []).filter(u => u !== me.username);
+      onlineUsers = (msg.users || []).filter(u => u !== (me && me.username));
+      // 若选中的用户已离线，清空选择
+      if (selectedPeer && onlineUsers.indexOf(selectedPeer) === -1) {
+        selectedPeer = null;
+        $('peerLabel').textContent = '—';
+      }
       renderUsers();
+      updateButtons();
       break;
 
     case 'peer:offline':
@@ -662,14 +904,14 @@ function handleSignal(msg) {
       break;
 
     case 'error':
-      toast(msg.error || '服务端异常');
+      toast(msg.error || '服务端异常', 'error');
       break;
 
     case 'call:invite':   onIncoming(msg); break;
     case 'call:accept':   onAccepted(msg); break;
 
     case 'call:reject':
-      toast('对方辞谢了通话' + (msg.reason ? '（' + msg.reason + '）' : ''));
+      toast('对方辞谢了通话' + (msg.reason ? '（' + msg.reason + '）' : ''), 'info');
       cleanupCall(false);
       break;
 
@@ -698,6 +940,11 @@ function handleSignal(msg) {
 function renderUsers() {
   const box = $('userList');
   $('onlineCount').textContent = onlineUsers.length;
+
+  if (!me) {
+    box.innerHTML = '<div class="empty">请先登录 · 方见同道</div>';
+    return;
+  }
   if (!onlineUsers.length) {
     box.innerHTML = '<div class="empty">暂无同门在线</div>';
     return;
@@ -717,6 +964,11 @@ function renderUsers() {
 }
 
 function selectPeer(u) {
+  if (!me) {
+    toast('请先登录', 'error');
+    openLoginModal();
+    return;
+  }
   selectedPeer = u;
   renderUsers();
   $('peerLabel').textContent = u;
@@ -727,10 +979,11 @@ function updateButtons() {
   const busy = !!call;
   const connected = call && call.state === 'connected';
   const hasPeer = !!selectedPeer;
+  const loggedIn = !!me;
 
-  $('btnVideo').disabled  = busy || !hasPeer;
-  $('btnAudio').disabled  = busy || !hasPeer;
-  $('btnData').disabled   = busy || !hasPeer;
+  $('btnVideo').disabled  = busy || !hasPeer || !loggedIn;
+  $('btnAudio').disabled  = busy || !hasPeer || !loggedIn;
+  $('btnData').disabled   = busy || !hasPeer || !loggedIn;
   $('btnHangup').disabled = !busy;
   $('btnMute').disabled   = !connected;
   $('btnScreen').disabled = !connected;
@@ -743,9 +996,14 @@ function updateButtons() {
    发起呼叫
    ============================================================ */
 async function startCall(peer, media) {
-  if (call) return toast('已有通话进行中');
-  if (!peer) return toast('请先择一人');
-  if (peer === me.username) return toast('不可呼叫自己');
+  if (!me) {
+    toast('请先登录', 'error');
+    openLoginModal();
+    return;
+  }
+  if (call) return toast('已有通话进行中', 'info');
+  if (!peer) return toast('请先择一人', 'info');
+  if (peer === me.username) return toast('不可呼叫自己', 'info');
 
   const callId = rand();
   let stream = null;
@@ -760,7 +1018,7 @@ async function startCall(peer, media) {
       });
     }
   } catch (e) {
-    return toast('无法取用设备：' + e.message);
+    return toast('无法取用设备：' + e.message, 'error');
   }
 
   call = {
@@ -793,8 +1051,12 @@ function onIncoming(msg) {
 
 $('btnReject').onclick = () => {
   if (pendingIncoming) {
-    send({ type: 'call:reject', to: pendingIncoming.from,
-           callId: pendingIncoming.callId, reason: 'declined' });
+    send({
+      type: 'call:reject',
+      to: pendingIncoming.from,
+      callId: pendingIncoming.callId,
+      reason: 'declined'
+    });
     sysLog('已辞谢 ' + pendingIncoming.from);
     pendingIncoming = null;
   }
@@ -819,7 +1081,7 @@ $('btnAccept').onclick = async () => {
     }
   } catch (e) {
     send({ type: 'call:reject', to: inv.from, callId: inv.callId, reason: 'no-device' });
-    return toast('无法取用设备：' + e.message);
+    return toast('无法取用设备：' + e.message, 'error');
   }
 
   call = {
@@ -837,11 +1099,13 @@ $('btnAccept').onclick = async () => {
 };
 
 /* ============================================================
-   WebRTC
+   WebRTC 核心
    ============================================================ */
 function buildPC() {
   const pc = new RTCPeerConnection({
-    iceServers, iceCandidatePoolSize: 4, bundlePolicy: 'max-bundle'
+    iceServers,
+    iceCandidatePoolSize: 4,
+    bundlePolicy: 'max-bundle'
   });
   call.pc = pc;
 
@@ -890,7 +1154,7 @@ function buildPC() {
       $('stageHint').style.display = 'none';
       updateButtons();
     } else if (st === 'failed') {
-      toast('连接失败，或需 TURN 中转');
+      toast('连接失败，或需 TURN 中转', 'error');
       cleanupCall(false);
     } else if (st === 'disconnected') {
       sysLog('音信不稳…');
@@ -903,11 +1167,13 @@ async function onAccepted(msg) {
   try {
     const offer = await call.pc.createOffer();
     await call.pc.setLocalDescription(offer);
-    send({ type: 'rtc:offer', to: call.peer, callId: call.id,
-           sdp: call.pc.localDescription });
+    send({
+      type: 'rtc:offer', to: call.peer, callId: call.id,
+      sdp: call.pc.localDescription
+    });
     sysLog('对方已应，正在通达…');
   } catch (e) {
-    toast('建立连接失败：' + e.message);
+    toast('建立连接失败：' + e.message, 'error');
     cleanupCall(true);
   }
 }
@@ -919,10 +1185,12 @@ async function onRemoteOffer(msg) {
     await flushIce();
     const answer = await call.pc.createAnswer();
     await call.pc.setLocalDescription(answer);
-    send({ type: 'rtc:answer', to: call.peer, callId: call.id,
-           sdp: call.pc.localDescription });
+    send({
+      type: 'rtc:answer', to: call.peer, callId: call.id,
+      sdp: call.pc.localDescription
+    });
   } catch (e) {
-    toast('处理 offer 失败：' + e.message);
+    toast('处理 offer 失败：' + e.message, 'error');
     cleanupCall(true);
   }
 }
@@ -933,7 +1201,7 @@ async function onRemoteAnswer(msg) {
     await call.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
     await flushIce();
   } catch (e) {
-    toast('处理 answer 失败：' + e.message);
+    toast('处理 answer 失败：' + e.message, 'error');
   }
 }
 
@@ -1000,8 +1268,10 @@ function bindFile(ch) {
       let m;
       try { m = JSON.parse(ev.data); } catch (_) { return; }
       if (m.t === 'meta') {
-        rxFile = { id: m.id, name: m.name, size: m.size, mime: m.mime,
-                   chunks: [], got: 0, node: null, bar: null };
+        rxFile = {
+          id: m.id, name: m.name, size: m.size, mime: m.mime,
+          chunks: [], got: 0, node: null, bar: null
+        };
         const node = document.createElement('div');
         node.className = 'file-card';
         node.innerHTML =
@@ -1042,7 +1312,8 @@ function finalizeReceive() {
     a.href = url;
     a.download = f.name;
     a.textContent = '存 取 文 书';
-    a.style.cssText = 'display:inline-block;margin-top:9px;font-family:var(--font-kai);letter-spacing:.14em';
+    a.style.cssText =
+      'display:inline-block;margin-top:9px;font-family:var(--font-kai);letter-spacing:.14em';
     f.node.appendChild(a);
   }
   sysLog('文书已收：' + f.name);
@@ -1058,7 +1329,11 @@ $('btnFileAccept').onclick = () => {
 $('btnFileReject').onclick = () => {
   $('fileMask').classList.remove('show');
   if (pendingFileOffer) {
-    sendCtrl({ type: 'file-reject', id: pendingFileOffer.id, name: pendingFileOffer.name });
+    sendCtrl({
+      type: 'file-reject',
+      id: pendingFileOffer.id,
+      name: pendingFileOffer.name
+    });
     pendingFileOffer = null;
   }
 };
@@ -1081,7 +1356,7 @@ $('fileInput').onchange = e => {
 
 function enqueueFile(file) {
   if (!call || !call.dcCtrl || call.dcCtrl.readyState !== 'open') {
-    return toast('文路未通');
+    return toast('文路未通', 'error');
   }
   const id = rand();
   sendQueue.push({ id, file, accepted: false });
@@ -1116,7 +1391,7 @@ async function pumpQueue() {
     node.querySelector('.row').lastElementChild.textContent = '已发';
   } catch (e) {
     node.querySelector('.row').lastElementChild.textContent = '失败';
-    toast('文书发送失败：' + e.message);
+    toast('文书发送失败：' + e.message, 'error');
   }
 
   sendQueue = sendQueue.filter(x => x.id !== item.id);
@@ -1163,7 +1438,7 @@ function sendChat() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
-  if (!sendCtrl({ type: 'chat', text })) return toast('文路未通');
+  if (!sendCtrl({ type: 'chat', text })) return toast('文路未通', 'error');
   logNode(text, 'me');
   input.value = '';
 }
@@ -1205,7 +1480,7 @@ $('btnScreen').onclick = async () => {
     st.onended = () => $('btnScreen').click();
     $('btnScreen').textContent = '止共享';
   } catch (e) {
-    toast('已取消共享');
+    toast('已取消共享', 'info');
   }
 };
 
@@ -1256,15 +1531,77 @@ function cleanupCall(notify) {
   updateButtons();
 }
 
+/* ============================================================
+   登录事件绑定
+   ============================================================ */
+function bindLoginEvents() {
+  $('loginBtn').addEventListener('click', openLoginModal);
+  $('logoutBtn').addEventListener('click', doLogout);
+  $('btnCloseLogin').addEventListener('click', closeLoginModal);
+  $('btnSubmitLogin').addEventListener('click', submitLogin);
+
+  // 回车提交
+  $('loginPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitLogin();
+  });
+  $('loginUser').addEventListener('keydown', e => {
+    if (e.key === 'Enter') $('loginPass').focus();
+  });
+
+  // 点击遮罩关闭
+  $('loginMask').addEventListener('click', e => {
+    if (e.target === $('loginMask')) closeLoginModal();
+  });
+
+  // ESC 关闭登录框
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('loginMask').classList.contains('show')) {
+      closeLoginModal();
+    }
+  });
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+async function boot() {
+  bindLoginEvents();
+  updateLoginUI(false);
+  updateButtons();
+
+  // 预取 CSRF（即便未登录也能拿，便于登录请求带上）
+  try { await fetchCsrf(); } catch (_) {}
+
+  // 检查登录状态
+  try {
+    const data = await api('/api/me');
+    if (data && data.username) {
+      me = {
+        username: data.username,
+        role: data.role,
+        mustChangePassword: !!data.mustChangePassword
+      };
+      csrf = data.csrfToken || csrf;
+      updateLoginUI(true);
+      await connect();
+    } else {
+      me = null;
+      updateLoginUI(false);
+      setStatus('未登录', false);
+    }
+  } catch (_) {
+    me = null;
+    updateLoginUI(false);
+    setStatus('未连接', false);
+  }
+}
+
 window.addEventListener('beforeunload', () => {
   if (call) {
     try { send({ type: 'call:hangup', to: call.peer, callId: call.id }); } catch (_) {}
   }
 });
 
-/* ============================================================
-   启程
-   ============================================================ */
 boot();
 </script>
 </body>
