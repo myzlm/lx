@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>墨韵 · 连线</title>
 <style>
-/* ============================================================
-   根基 · 墨色与鎏金
-   ============================================================ */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --ink-0:#0a0806; --ink-1:#100d0a; --ink-2:#17130f;
@@ -15,9 +12,10 @@
   --gold:#c9a961; --gold-2:#e8d5a0; --gold-3:#8a7440; --gold-4:#5c4d2a;
   --cinnabar:#9e2b25; --cinnabar-2:#c1392b;
   --paper:#e6dcc4; --paper-2:#b8ab90; --paper-3:#7d735f;
-  --ok:#7fa86b; --err:#b84a3f;
+  --ok:#7fa86b; --err:#b84a3f; --warn:#d9a04a;
   --font-serif:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC","SimSun",serif;
   --font-kai:"KaiTi","STKaiti","Kaiti SC","楷体",var(--font-serif);
+  --tile-min:240px;
 }
 html,body{height:100%}
 body{
@@ -35,12 +33,10 @@ body::before{
 }
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--ink-5);border-radius:0}
+::-webkit-scrollbar-thumb{background:var(--ink-5)}
 ::-webkit-scrollbar-thumb:hover{background:var(--gold-4)}
 
-/* ============================================================
-   顶栏
-   ============================================================ */
+/* ---- 顶栏 ---- */
 .topbar{
   position:relative; z-index:5; flex:none;
   height:66px; display:flex; align-items:center; gap:14px;
@@ -114,9 +110,7 @@ body::before{
   background:rgba(201,169,97,.08);
 }
 
-/* ============================================================
-   主体
-   ============================================================ */
+/* ---- 主体 ---- */
 .grid{
   position:relative; z-index:1; flex:1; min-height:0;
   display:grid; grid-template-columns:252px 1fr 336px;
@@ -153,7 +147,7 @@ body::before{
 }
 .col-body{flex:1; overflow-y:auto; padding:9px; min-height:0}
 
-/* 用户列表（多选） */
+/* ---- 用户列表 ---- */
 .user-item{
   display:flex; align-items:center; gap:10px;
   padding:9px 10px; cursor:pointer; border-radius:2px;
@@ -198,34 +192,112 @@ body::before{
   color:var(--paper-3); font-family:var(--font-kai); letter-spacing:.16em;
 }
 
-/* ============================================================
-   视频网格
-   ============================================================ */
+/* ---- 舞台 ---- */
 .stage{
   flex:1; min-height:0; position:relative;
+  display:flex; flex-direction:column;
   background:radial-gradient(ellipse at center,#15110d,#070504 78%);
   overflow:hidden;
 }
+
+/* 聚焦主画面 */
+.focus-main{
+  display:none;
+  position:relative;
+  flex:1; min-height:0;
+  margin:8px 8px 4px;
+  background:#000;
+  border:1px solid var(--gold-3);
+  border-radius:3px;
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 8px 30px rgba(0,0,0,.7);
+}
+.stage.focused .focus-main{display:block}
+.stage.focused .hint{display:none !important}
+
+.focus-main video{
+  width:100%; height:100%; object-fit:contain; display:block; background:#000;
+}
+.focus-main .focus-label{
+  position:absolute; left:12px; bottom:12px;
+  padding:3px 14px;
+  font-family:var(--font-kai); font-size:13px; letter-spacing:.16em;
+  color:var(--gold-2);
+  background:rgba(0,0,0,.65);
+  border:1px solid var(--gold-4); border-radius:2px;
+  backdrop-filter:blur(3px);
+  max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.focus-main .focus-actions{
+  position:absolute; top:12px; right:12px;
+  display:flex; gap:8px;
+}
+.focus-main .focus-actions button{
+  padding:5px 12px; font-size:12px;
+}
+
+/* 视频网格 */
 .stage-grid{
-  position:absolute; inset:0;
+  position:relative; flex:1; min-height:0;
   display:grid; gap:8px; padding:8px;
-  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
-  grid-auto-rows:1fr;
+  grid-template-columns:repeat(auto-fit, minmax(var(--tile-min), 1fr));
+  grid-auto-rows:minmax(120px, 1fr);
   align-content:stretch;
+  overflow:auto;
+  transition:height .25s ease;
 }
 .stage-grid:empty{display:none}
+
+/* 聚焦模式下的网格：变横向缩略图条 */
+.stage.focused .stage-grid{
+  flex:none;
+  display:flex;
+  flex-direction:row;
+  gap:6px;
+  height:104px;
+  padding:4px 8px 8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  align-items:stretch;
+}
+.stage.focused .stage-grid .tile{
+  flex:none;
+  width:148px;
+  height:88px;
+  min-height:0;
+}
+.stage.focused .stage-grid .tile .tile-label{
+  font-size:11px; left:5px; bottom:5px; padding:1px 6px;
+  max-width:calc(100% - 44px);
+}
+.stage.focused .stage-grid .tile .tile-state{
+  font-size:9px; padding:1px 5px;
+}
+.stage.focused .stage-grid .tile .tile-focus{display:none}
+.stage.focused .stage-grid .tile:hover{
+  border-color:var(--gold-2);
+  box-shadow:0 0 12px rgba(201,169,97,.4);
+  cursor:pointer;
+}
 
 .tile{
   position:relative; overflow:hidden; min-height:120px;
   border-radius:3px; background:#000;
   border:1px solid var(--gold-4);
   box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 6px 20px rgba(0,0,0,.5);
+  transition:border-color .2s, box-shadow .2s;
+}
+.tile.focused{
+  border-color:var(--gold-2);
+  box-shadow:0 0 0 1px var(--gold-3), 0 8px 24px rgba(201,169,97,.15);
 }
 .tile video{
-  width:100%; height:100%; object-fit:cover; display:block;
+  width:100%; height:100%; object-fit:cover; display:block; background:#000;
 }
 .tile.self video{transform:scaleX(-1)}
 .tile.sharing video{object-fit:contain; transform:none}
+.tile.self.sharing video{transform:none}
+
 .tile .tile-label{
   position:absolute; left:8px; bottom:8px;
   padding:2px 9px;
@@ -234,8 +306,13 @@ body::before{
   background:rgba(0,0,0,.55);
   border:1px solid var(--gold-4); border-radius:2px;
   backdrop-filter:blur(3px);
-  max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  max-width:calc(100% - 84px);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+.tile .tile-label .share-tag{
+  color:var(--cinnabar-2); margin-left:4px; font-size:10px;
+}
+
 .tile .tile-state{
   position:absolute; right:8px; top:8px;
   padding:2px 7px;
@@ -244,9 +321,61 @@ body::before{
   color:var(--paper-3);
   background:rgba(0,0,0,.5);
   border-radius:2px;
+  pointer-events:none;
 }
 .tile .tile-state.ok{color:var(--ok)}
 .tile .tile-state.bad{color:var(--err)}
+
+.tile .tile-focus{
+  position:absolute; right:8px; top:36px;
+  width:24px; height:24px; padding:0;
+  display:grid; place-items:center;
+  font-size:12px; line-height:1;
+  color:var(--paper-2);
+  background:rgba(0,0,0,.55);
+  border:1px solid var(--gold-4); border-radius:2px;
+  cursor:pointer; transition:.18s;
+  opacity:0;
+  font-family:var(--font-serif);
+}
+.tile:hover .tile-focus{opacity:1}
+.tile .tile-focus:hover{
+  color:var(--gold-2); border-color:var(--gold-2);
+  background:rgba(201,169,97,.15);
+  box-shadow:0 0 10px rgba(201,169,97,.4);
+}
+.tile.self .tile-focus{display:none}
+
+/* 网格工具条 */
+.stage-tools{
+  flex:none;
+  display:flex; align-items:center; gap:10px;
+  padding:0 12px 8px;
+  font-family:var(--font-kai); font-size:11px;
+  letter-spacing:.14em; color:var(--paper-3);
+}
+.stage.focused .stage-tools{display:none}
+.stage-tools.hidden{display:none}
+.stage-tools label{white-space:nowrap}
+.stage-tools input[type=range]{
+  flex:1; max-width:180px;
+  -webkit-appearance:none; appearance:none;
+  height:3px; background:var(--ink-5); border-radius:2px;
+  outline:none;
+}
+.stage-tools input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:12px; height:12px; border-radius:50%;
+  background:var(--gold); border:1px solid var(--gold-2);
+  cursor:pointer;
+  box-shadow:0 0 8px rgba(201,169,97,.5);
+}
+.stage-tools input[type=range]::-moz-range-thumb{
+  width:12px; height:12px; border-radius:50%;
+  background:var(--gold); border:1px solid var(--gold-2);
+  cursor:pointer;
+}
+.stage-tools .t-val{color:var(--gold-3); min-width:32px; text-align:right}
 
 .hint{
   position:absolute; inset:0;
@@ -276,7 +405,7 @@ button{
   font-family:var(--font-kai); font-size:13.5px; letter-spacing:.14em;
   color:var(--paper); background:linear-gradient(180deg,var(--ink-4),var(--ink-3));
   border:1px solid var(--gold-4); border-radius:2px;
-  padding:8px 16px; cursor:pointer; transition:.18s; position:relative;
+  padding:8px 16px; cursor:pointer; transition:.18s;
   white-space:nowrap;
 }
 button:hover:not(:disabled){
@@ -310,9 +439,61 @@ button.active{
   box-shadow:0 0 18px rgba(201,169,97,.35), inset 0 0 16px rgba(201,169,97,.15);
 }
 
-/* ============================================================
-   消息区
-   ============================================================ */
+/* ---- 连线成员栏 ---- */
+.members-bar{
+  flex:none;
+  display:flex; flex-wrap:wrap; gap:6px;
+  padding:9px 14px;
+  border-bottom:1px solid var(--gold-4);
+  background:linear-gradient(180deg,rgba(201,169,97,.05),transparent);
+  min-height:40px; align-items:center;
+  overflow-y:auto; max-height:88px;
+}
+.members-bar:empty::before{
+  content:'未有连线 · 静待同道';
+  color:var(--paper-3);
+  font-family:var(--font-kai);
+  font-size:12px; letter-spacing:.18em;
+}
+.member-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:3px 10px;
+  font-size:12px; font-family:var(--font-kai);
+  letter-spacing:.08em;
+  background:linear-gradient(180deg,var(--ink-3),var(--ink-2));
+  border:1px solid var(--gold-4); border-radius:2px;
+  color:var(--paper-2);
+  white-space:nowrap;
+  transition:.2s;
+}
+.member-chip.self{
+  border-color:var(--gold-3);
+  color:var(--gold-2);
+  background:linear-gradient(180deg,#3b2f19,#2a2112);
+  box-shadow:0 0 12px rgba(201,169,97,.14);
+}
+.member-chip.sharing{
+  border-color:var(--cinnabar);
+  color:#e8b2aa;
+}
+.member-chip .m-dot{
+  width:6px; height:6px; border-radius:50%; flex:none;
+  background:var(--ok); box-shadow:0 0 6px var(--ok);
+}
+.member-chip.self .m-dot{
+  background:var(--gold); box-shadow:0 0 8px var(--gold);
+}
+.member-chip .m-dot.pending{
+  background:var(--warn);
+  box-shadow:0 0 6px var(--warn);
+  animation:pulse 1.4s infinite;
+}
+@keyframes pulse{
+  0%,100%{opacity:1}
+  50%{opacity:.4}
+}
+
+/* ---- 消息区 ---- */
 .log{
   flex:1; min-height:0; overflow-y:auto; padding:14px;
   display:flex; flex-direction:column; gap:10px;
@@ -346,6 +527,7 @@ button.active{
 }
 .msg.sys::before{content:'— '}
 .msg.sys::after{content:' —'}
+.msg.sys.leave{color:#c08a80}
 
 .file-card{
   align-self:stretch; padding:11px 14px; border-radius:2px;
@@ -389,9 +571,7 @@ button.active{
 }
 .composer input[type=text]::placeholder{color:var(--paper-3); letter-spacing:.1em}
 
-/* ============================================================
-   弹窗
-   ============================================================ */
+/* ---- 弹窗 ---- */
 .mask{
   position:fixed; inset:0; z-index:100; padding:20px;
   display:none; place-items:center;
@@ -468,9 +648,7 @@ button.active{
   color:var(--gold-2); background:rgba(201,169,97,.1);
 }
 
-/* ============================================================
-   浮言
-   ============================================================ */
+/* ---- 浮言 ---- */
 #toasts{
   position:fixed; top:84px; left:50%; transform:translateX(-50%);
   z-index:300; display:flex; flex-direction:column; gap:9px;
@@ -488,17 +666,11 @@ button.active{
   color:#e8b2aa; border-color:var(--cinnabar);
   box-shadow:0 10px 34px rgba(0,0,0,.75), 0 0 22px rgba(158,43,37,.28);
 }
-.toast.success{
-  color:var(--gold-2); border-color:var(--gold-3);
-}
-.toast.info{
-  color:var(--paper-2); border-color:var(--ink-5);
-}
+.toast.success{color:var(--gold-2); border-color:var(--gold-3)}
+.toast.info{color:var(--paper-2); border-color:var(--ink-5)}
 @keyframes toastIn{from{opacity:0; transform:translateY(-12px)}}
 
-/* ============================================================
-   小屏
-   ============================================================ */
+/* ---- 小屏 ---- */
 @media(max-width:920px){
   .grid{
     grid-template-columns:1fr; grid-template-rows:auto minmax(220px,1fr) auto;
@@ -515,7 +687,9 @@ button.active{
   .user-pill{font-size:12px; padding:4px 10px; max-width:120px}
   .auth-btn{padding:5px 11px; font-size:12px; letter-spacing:.1em}
   button{padding:7px 12px; font-size:12.5px; letter-spacing:.1em}
-  .stage-grid{grid-template-columns:1fr; grid-template-rows:auto}
+  .stage-grid{grid-template-columns:1fr}
+  .stage.focused .stage-grid{height:88px}
+  .stage.focused .stage-grid .tile{width:120px; height:74px}
 }
 </style>
 </head>
@@ -540,7 +714,6 @@ button.active{
 <!-- ══════════ 主体 ══════════ -->
 <main class="grid">
 
-  <!-- 左：在线用户（多选） -->
   <section class="col users">
     <div class="col-head">
       <span class="t">在 线 用 户</span>
@@ -551,10 +724,26 @@ button.active{
     </div>
   </section>
 
-  <!-- 中：视频网格 -->
   <section class="col stage-col">
     <div class="stage" id="stage">
+      <!-- 聚焦主画面 -->
+      <div class="focus-main" id="focusMain">
+        <video id="focusVideo" autoplay playsinline></video>
+        <div class="focus-label" id="focusLabel">—</div>
+        <div class="focus-actions">
+          <button class="sm" id="btnFocusFs">全 屏</button>
+          <button class="danger sm" id="btnFocusClose">退 出 聚 焦</button>
+        </div>
+      </div>
+
       <div class="stage-grid" id="stageGrid"></div>
+
+      <div class="stage-tools" id="stageTools">
+        <label>画 面 大 小</label>
+        <input type="range" id="scaleRange" min="0.6" max="2.4" step="0.2" value="1">
+        <span class="t-val" id="scaleVal">1.0×</span>
+      </div>
+
       <div class="hint" id="stageHint">
         <b>择 友 而 谈</b>
         <div class="hr"></div>
@@ -562,7 +751,7 @@ button.active{
         发起视频 · 语音 · 传书
       </div>
     </div>
-    <div class="controls" id="controls">
+    <div class="controls">
       <button class="primary" id="btnVideo" disabled>视频</button>
       <button class="primary" id="btnAudio" disabled>语音</button>
       <button id="btnData" disabled>传书</button>
@@ -572,11 +761,15 @@ button.active{
     </div>
   </section>
 
-  <!-- 右：消息与文件 -->
   <section class="col chat">
     <div class="col-head">
-      <span class="t">消 息 与 文 书</span>
+      <span class="t">连 线 成 员</span>
       <span class="n" id="peerLabel">—</span>
+    </div>
+    <div class="members-bar" id="membersBar"></div>
+    <div class="col-head" style="border-top:1px solid var(--gold-4);">
+      <span class="t">消 息 与 文 书</span>
+      <span class="n" id="msgCount">0</span>
     </div>
     <div class="log" id="log"></div>
     <div class="composer">
@@ -671,20 +864,17 @@ let onlineUsers = [];
 let selectedPeers = new Set();
 let groupCall = null;
 let reconnectTimer = null;
+let focusedPeer = null;    // 当前聚焦的用户名（null 表示未聚焦）
 
-/* 文件发送队列：每个 (file, peer) 组合是一个独立任务 */
 let sendQueue = [];
 const activeTasks = new Set();
-
-/* 文件接收：每个 peer 独立跟踪 */
 const rxFileByPeer = new Map();
-
-/* 文件接收确认弹窗队列 */
 const fileOfferQueue = [];
 let currentFileOffer = null;
 
 let pendingIncoming = null;
 let connecting = false;
+let msgTotal = 0;
 
 const $ = id => document.getElementById(id);
 const rand = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -722,6 +912,9 @@ function roleText(r) {
   return ({ owner: '主人', admin: '管事', member: '同门' })[r] || r;
 }
 function shouldIOffer(a, b) { return a < b; }
+function cssEscape(s) {
+  return (window.CSS && CSS.escape) ? CSS.escape(s) : s.replace(/([^\w-])/g, '\\$1');
+}
 
 /* ============================================================
    统一请求
@@ -744,7 +937,6 @@ async function api(path, opts = {}) {
   });
 
   const res = await fetch(API_BASE + path, cfg);
-
   let data = null;
   try { data = await res.json(); } catch (_) {}
 
@@ -768,8 +960,7 @@ async function api(path, opts = {}) {
 
 async function fetchCsrf() {
   const res = await fetch(API_BASE + '/api/csrf', {
-    credentials: 'include',
-    mode: 'cors'
+    credentials: 'include', mode: 'cors'
   });
   if (!res.ok) return;
   const data = await res.json().catch(() => null);
@@ -777,7 +968,7 @@ async function fetchCsrf() {
 }
 
 /* ============================================================
-   消息区（带发送人）
+   消息区
    ============================================================ */
 function logNode(text, cls, who = null) {
   const d = document.createElement('div');
@@ -793,18 +984,50 @@ function logNode(text, cls, who = null) {
   }
   $('log').appendChild(d);
   $('log').scrollTop = $('log').scrollHeight;
+  if (cls !== 'sys') {
+    msgTotal++;
+    $('msgCount').textContent = msgTotal;
+  }
   return d;
 }
-function sysLog(text) { logNode(text, 'sys'); }
+function sysLog(text, cls) { logNode(text, 'sys ' + (cls || '')); }
 
 /* ============================================================
-   登录模块
+   连线成员
+   ============================================================ */
+function renderMembers() {
+  const bar = $('membersBar');
+  if (!bar) return;
+  if (!groupCall || !me) { bar.innerHTML = ''; return; }
+
+  const chips = [];
+  const selfSharing = groupCall.screenStream ? true : false;
+  chips.push(makeChip(me.username, true, 'ok', selfSharing));
+  for (const peer of groupCall.peers) {
+    const conn = groupCall.connections.get(peer);
+    const cls = (conn && conn.state === 'connected') ? 'ok' : 'pending';
+    const sharing = conn && conn.isSharing ? true : false;
+    chips.push(makeChip(peer, false, cls, sharing));
+  }
+  bar.innerHTML = chips.join('');
+}
+function makeChip(name, isSelf, stateCls, sharing) {
+  const dotCls = stateCls === 'pending' ? 'm-dot pending' : 'm-dot';
+  const shareCls = sharing ? ' sharing' : '';
+  const shareIcon = sharing ? ' 📺' : '';
+  return '<span class="member-chip' + (isSelf ? ' self' : '') + shareCls + '">' +
+    '<span class="' + dotCls + '"></span>' +
+    escapeHtml(name) + (isSelf ? '（我）' : '') + shareIcon +
+    '</span>';
+}
+
+/* ============================================================
+   登录
    ============================================================ */
 function updateLoginUI(loggedIn) {
   const loginBtn = $('loginBtn');
   const logoutBtn = $('logoutBtn');
   const meText = $('meText');
-
   if (loggedIn && me) {
     meText.textContent = me.username + ' · ' + roleText(me.role);
     loginBtn.style.display = 'none';
@@ -815,7 +1038,6 @@ function updateLoginUI(loggedIn) {
     logoutBtn.style.display = 'none';
   }
 }
-
 function openLoginModal() {
   $('loginUser').value = '';
   $('loginPass').value = '';
@@ -827,15 +1049,10 @@ function closeLoginModal() { $('loginMask').classList.remove('show'); }
 async function submitLogin() {
   const username = $('loginUser').value.trim();
   const password = $('loginPass').value;
-
-  if (!username || !password) {
-    toast('请输入账号和密码', 'error');
-    return;
-  }
+  if (!username || !password) return toast('请输入账号和密码', 'error');
 
   const btn = $('btnSubmitLogin');
-  btn.disabled = true;
-  btn.textContent = '登 录 中';
+  btn.disabled = true; btn.textContent = '登 录 中';
 
   try {
     const data = await api('/api/login', {
@@ -843,43 +1060,35 @@ async function submitLogin() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-
     me = {
       username: data.username,
       role: data.role,
       mustChangePassword: !!data.mustChangePassword
     };
     csrf = data.csrfToken || '';
-
     updateLoginUI(true);
     closeLoginModal();
     toast('欢迎回来，' + data.username, 'success');
-
     await connect();
   } catch (e) {
     toast(e.message || '登录失败', 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = '登 录';
+    btn.disabled = false; btn.textContent = '登 录';
   }
 }
 
 async function doLogout() {
   try { await api('/api/logout', { method: 'POST' }); } catch (_) {}
-
-  me = null;
-  csrf = '';
+  me = null; csrf = '';
   updateLoginUI(false);
-
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   if (ws) { try { ws.close(); } catch (_) {} ws = null; }
   cleanupGroupCall();
-
-  onlineUsers = [];
-  selectedPeers.clear();
+  onlineUsers = []; selectedPeers.clear();
   renderUsers();
   $('peerLabel').textContent = '—';
-  $('log').innerHTML = '';
+  $('log').innerHTML = ''; msgTotal = 0;
+  $('msgCount').textContent = '0';
   setStatus('未连接', false);
   toast('已登出', 'info');
 }
@@ -890,10 +1099,8 @@ async function doLogout() {
 async function connect() {
   if (!me || connecting) return;
   if (ws && ws.readyState === 1) return;
-
   connecting = true;
   setStatus('连接中', false);
-
   try {
     const t = await api('/api/rtc/ticket', { method: 'POST' });
     if (t && Array.isArray(t.iceServers) && t.iceServers.length) {
@@ -912,15 +1119,12 @@ async function connect() {
 function openWS(ticket) {
   try { if (ws) ws.close(); } catch (_) {}
   ws = new WebSocket(WS_URL + '?ticket=' + encodeURIComponent(ticket));
-
   ws.onopen = () => setStatus('已 通', true);
-
   ws.onmessage = ev => {
     let msg;
     try { msg = JSON.parse(ev.data); } catch (_) { return; }
     handleSignal(msg);
   };
-
   ws.onclose = () => {
     setStatus('已 断', false);
     cleanupGroupCall(true);
@@ -939,6 +1143,15 @@ function send(obj) {
   return false;
 }
 
+function broadcastCtrl(obj) {
+  if (!groupCall) return;
+  for (const [, conn] of groupCall.connections) {
+    if (conn.dcCtrl && conn.dcCtrl.readyState === 'open') {
+      try { conn.dcCtrl.send(JSON.stringify(obj)); } catch (_) {}
+    }
+  }
+}
+
 /* ============================================================
    信令
    ============================================================ */
@@ -949,7 +1162,6 @@ function handleSignal(msg) {
         iceServers = msg.iceServers;
       }
       break;
-
     case 'presence':
       onlineUsers = (msg.users || []).filter(u => u !== (me && me.username));
       for (const p of [...selectedPeers]) {
@@ -958,30 +1170,23 @@ function handleSignal(msg) {
       renderUsers();
       updateButtons();
       break;
-
     case 'peer:offline':
-      toast('对方已离线');
+      toast('「' + msg.to + '」已离线', 'error');
       if (groupCall && groupCall.peers.has(msg.to)) {
-        closePeer(msg.to);
-        groupCall.peers.delete(msg.to);
-        renderVideoGrid();
-        updateButtons();
+        removePeer(msg.to, '离线');
       }
       break;
-
     case 'error':
       toast(msg.error || '服务端异常', 'error');
       break;
-
     case 'call:invite':   onIncoming(msg); break;
     case 'call:accept':   onAccepted(msg); break;
     case 'call:members':  onMembers(msg); break;
     case 'call:reject':   onRejected(msg); break;
     case 'call:leave':    onLeave(msg); break;
-
-    case 'rtc:offer':  onRemoteOffer(msg); break;
-    case 'rtc:answer': onRemoteAnswer(msg); break;
-    case 'rtc:ice':    onRemoteIce(msg); break;
+    case 'rtc:offer':     onRemoteOffer(msg); break;
+    case 'rtc:answer':    onRemoteAnswer(msg); break;
+    case 'rtc:ice':       onRemoteIce(msg); break;
   }
 }
 
@@ -991,15 +1196,8 @@ function handleSignal(msg) {
 function renderUsers() {
   const box = $('userList');
   $('onlineCount').textContent = onlineUsers.length;
-
-  if (!me) {
-    box.innerHTML = '<div class="empty">请先登录 · 方见同道</div>';
-    return;
-  }
-  if (!onlineUsers.length) {
-    box.innerHTML = '<div class="empty">暂无同门在线</div>';
-    return;
-  }
+  if (!me) { box.innerHTML = '<div class="empty">请先登录 · 方见同道</div>'; return; }
+  if (!onlineUsers.length) { box.innerHTML = '<div class="empty">暂无同门在线</div>'; return; }
   box.innerHTML = '';
   for (const u of onlineUsers) {
     const active = selectedPeers.has(u);
@@ -1013,10 +1211,8 @@ function renderUsers() {
       '<div class="tag">在线</div>';
     el.onclick = () => togglePeer(u);
     el.ondblclick = () => {
-      selectedPeers.clear();
-      selectedPeers.add(u);
-      renderUsers();
-      updateButtons();
+      selectedPeers.clear(); selectedPeers.add(u);
+      renderUsers(); updateButtons();
       startCall('video');
     };
     box.appendChild(el);
@@ -1024,23 +1220,16 @@ function renderUsers() {
 }
 
 function togglePeer(u) {
-  if (!me) {
-    toast('请先登录', 'error');
-    openLoginModal();
-    return;
-  }
+  if (!me) { toast('请先登录', 'error'); openLoginModal(); return; }
   if (groupCall) return toast('通话中不可更改选择', 'info');
-
-  if (selectedPeers.has(u)) {
-    selectedPeers.delete(u);
-  } else {
+  if (selectedPeers.has(u)) selectedPeers.delete(u);
+  else {
     if (selectedPeers.size >= MAX_MESH - 1) {
       return toast('最多同时连线 ' + (MAX_MESH - 1) + ' 人', 'info');
     }
     selectedPeers.add(u);
   }
-  renderUsers();
-  updateButtons();
+  renderUsers(); updateButtons();
 }
 
 function updateButtons() {
@@ -1056,7 +1245,7 @@ function updateButtons() {
   $('btnMute').disabled   = !active;
   $('btnScreen').disabled = !active;
   $('btnSend').disabled   = !active;
-  $('btnPick').disabled   = !active;   // 多人也可传书
+  $('btnPick').disabled   = !active;
   $('chatInput').disabled = !active;
 }
 
@@ -1085,22 +1274,12 @@ async function startCall(media) {
 
   const callId = rand();
   const invited = new Set(selectedPeers);
-
   groupCall = {
-    id: callId,
-    host: me.username,
-    peers: new Set(),
-    invited,
-    media,
-    localStream: stream,
-    connections: new Map(),
-    screenStream: null,
-    screenTrack: null
+    id: callId, host: me.username, peers: new Set(), invited, media,
+    localStream: stream, connections: new Map(),
+    screenStream: null, screenTrack: null
   };
-
-  renderVideoGrid();
-  updateButtons();
-
+  renderVideoGrid(); renderMembers(); updateButtons();
   for (const peer of invited) {
     send({ type: 'call:invite', to: peer, callId, media, from: me.username });
   }
@@ -1121,10 +1300,8 @@ function onIncoming(msg) {
 $('btnReject').onclick = () => {
   if (pendingIncoming) {
     send({
-      type: 'call:reject',
-      to: pendingIncoming.from,
-      callId: pendingIncoming.callId,
-      reason: 'declined'
+      type: 'call:reject', to: pendingIncoming.from,
+      callId: pendingIncoming.callId, reason: 'declined'
     });
     pendingIncoming = null;
   }
@@ -1154,20 +1331,12 @@ $('btnAccept').onclick = async () => {
   }
 
   groupCall = {
-    id: inv.callId,
-    host: inv.from,
-    peers: new Set([inv.from]),
-    invited: new Set(),
-    media: inv.media,
-    localStream: stream,
-    connections: new Map(),
-    screenStream: null,
-    screenTrack: null
+    id: inv.callId, host: inv.from, peers: new Set([inv.from]),
+    invited: new Set(), media: inv.media,
+    localStream: stream, connections: new Map(),
+    screenStream: null, screenTrack: null
   };
-
-  renderVideoGrid();
-  updateButtons();
-
+  renderVideoGrid(); renderMembers(); updateButtons();
   send({ type: 'call:accept', to: inv.from, callId: inv.callId, from: me.username });
   sysLog('已应邀 ' + inv.from);
 
@@ -1181,38 +1350,27 @@ $('btnAccept').onclick = async () => {
 function onAccepted(msg) {
   if (!groupCall || msg.callId !== groupCall.id) return;
   const peer = msg.from;
-
   groupCall.invited.delete(peer);
   if (!groupCall.peers.has(peer)) groupCall.peers.add(peer);
-
+  sysLog('「' + peer + '」已入席');
+  toast(peer + ' 已加入连线', 'success');
   broadcastMembers();
-  renderVideoGrid();
-  updateButtons();
-
-  if (shouldIOffer(me.username, peer)) {
-    ensurePeerConnection(peer, true);
-  } else {
-    ensurePeerConnection(peer, false);
-  }
+  renderVideoGrid(); renderMembers(); updateButtons();
+  if (shouldIOffer(me.username, peer)) ensurePeerConnection(peer, true);
+  else ensurePeerConnection(peer, false);
 }
 
 function broadcastMembers() {
   if (!groupCall) return;
   const members = [me.username, ...groupCall.peers];
   for (const peer of groupCall.peers) {
-    send({
-      type: 'call:members',
-      to: peer,
-      callId: groupCall.id,
-      members
-    });
+    send({ type: 'call:members', to: peer, callId: groupCall.id, members });
   }
 }
 
 function onMembers(msg) {
   if (!groupCall || msg.callId !== groupCall.id) return;
   const members = Array.isArray(msg.members) ? msg.members : [];
-
   const newPeers = new Set(
     members.filter(u => u && u !== me.username && u !== groupCall.host)
   );
@@ -1221,12 +1379,8 @@ function onMembers(msg) {
   }
 
   for (const old of [...groupCall.peers]) {
-    if (!newPeers.has(old)) {
-      closePeer(old);
-      groupCall.peers.delete(old);
-    }
+    if (!newPeers.has(old)) removePeer(old, '离席');
   }
-
   const added = [];
   for (const p of newPeers) {
     if (!groupCall.peers.has(p)) {
@@ -1234,16 +1388,14 @@ function onMembers(msg) {
       added.push(p);
     }
   }
-
-  renderVideoGrid();
-  updateButtons();
-
+  if (added.length) {
+    sysLog(added.join('、') + ' 已入席');
+    toast(added.join('、') + ' 加入连线', 'success');
+  }
+  renderVideoGrid(); renderMembers(); updateButtons();
   for (const p of added) {
-    if (shouldIOffer(me.username, p)) {
-      ensurePeerConnection(p, true);
-    } else {
-      ensurePeerConnection(p, false);
-    }
+    if (shouldIOffer(me.username, p)) ensurePeerConnection(p, true);
+    else ensurePeerConnection(p, false);
   }
 }
 
@@ -1266,12 +1418,30 @@ function onLeave(msg) {
   if (!groupCall || msg.callId !== groupCall.id) return;
   const peer = msg.from;
   if (groupCall.peers.has(peer)) {
-    closePeer(peer);
-    groupCall.peers.delete(peer);
-    sysLog(peer + ' 已离席');
-    renderVideoGrid();
-    updateButtons();
+    removePeer(peer, '离席');
   }
+}
+
+/* 统一的移除 peer 处理，带提示 */
+function removePeer(peer, reason) {
+  if (!groupCall) return;
+  if (!groupCall.peers.has(peer)) return;
+
+  closePeer(peer);
+  groupCall.peers.delete(peer);
+
+  sysLog('「' + peer + '」' + reason, 'leave');
+  toast(peer + ' ' + reason, 'error');
+
+  // 如果被移除的正是当前聚焦的人 → 退出聚焦
+  if (focusedPeer === peer) {
+    unfocusPeer();
+  }
+
+  renderVideoGrid();
+  renderMembers();
+  updateButtons();
+  broadcastMembers();
 }
 
 /* ============================================================
@@ -1281,9 +1451,7 @@ function ensurePeerConnection(peer, isInitiator) {
   if (!groupCall) return null;
   if (groupCall.connections.has(peer)) {
     const existing = groupCall.connections.get(peer);
-    if (isInitiator && !existing.isInitiator) {
-      renegotiateWith(peer);
-    }
+    if (isInitiator && !existing.isInitiator) renegotiateWith(peer);
     return existing;
   }
 
@@ -1295,14 +1463,11 @@ function ensurePeerConnection(peer, isInitiator) {
   });
 
   const conn = {
-    peer,
-    pc,
+    peer, pc,
     remoteStream: new MediaStream(),
-    dcCtrl: null,
-    dcFile: null,
-    pendingIce: [],
-    state: 'connecting',
-    isInitiator
+    dcCtrl: null, dcFile: null,
+    pendingIce: [], state: 'connecting', isInitiator,
+    isSharing: false
   };
   groupCall.connections.set(peer, conn);
 
@@ -1337,9 +1502,28 @@ function ensurePeerConnection(peer, isInitiator) {
     }
   };
 
+  // 关键修复：正确处理视频轨道替换
   pc.ontrack = ev => {
-    conn.remoteStream.addTrack(ev.track);
+    const t = ev.track;
+    // 移除同类旧轨道（避免共享结束后残留旧轨）
+    const sameKind = conn.remoteStream.getTracks().filter(x => x.kind === t.kind);
+    for (const old of sameKind) {
+      if (old !== t) {
+        try { conn.remoteStream.removeTrack(old); } catch (_) {}
+      }
+    }
+    if (!conn.remoteStream.getTracks().includes(t)) {
+      conn.remoteStream.addTrack(t);
+    }
     updatePeerVideo(peer, conn.remoteStream);
+    // 若当前正聚焦该 peer，同步刷新主画面
+    if (focusedPeer === peer) {
+      const fv = $('focusVideo');
+      if (fv && fv.srcObject !== conn.remoteStream) {
+        fv.srcObject = conn.remoteStream;
+        fv.play().catch(() => {});
+      }
+    }
     tryPlayAllVideos();
   };
 
@@ -1349,6 +1533,7 @@ function ensurePeerConnection(peer, isInitiator) {
     if (st === 'connected') updateTileState(peer, '已通', 'ok');
     else if (st === 'failed' || st === 'closed') updateTileState(peer, '中断', 'bad');
     else if (st === 'disconnected') updateTileState(peer, '不稳', 'bad');
+    renderMembers();
   };
 
   if (isInitiator) {
@@ -1360,12 +1545,9 @@ function ensurePeerConnection(peer, isInitiator) {
           type: 'rtc:offer', to: peer, callId: groupCall.id,
           sdp: pc.localDescription
         });
-      } catch (e) {
-        console.error('[createOffer]', e);
-      }
+      } catch (e) { console.error('[createOffer]', e); }
     })();
   }
-
   return conn;
 }
 
@@ -1373,18 +1555,13 @@ function closePeer(peer) {
   if (!groupCall) return;
   const conn = groupCall.connections.get(peer);
   if (!conn) return;
-
   try { conn.pc.close(); } catch (_) {}
   if (conn.dcCtrl) try { conn.dcCtrl.close(); } catch (_) {}
   if (conn.dcFile) try { conn.dcFile.close(); } catch (_) {}
-
   groupCall.connections.delete(peer);
-
-  // 清理该 peer 的发送/接收队列
   sendQueue = sendQueue.filter(x => x.peer !== peer);
   rxFileByPeer.delete(peer);
-
-  const tile = document.querySelector('.tile[data-peer="' + CSS.escape(peer) + '"]');
+  const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
   if (tile) tile.remove();
 }
 
@@ -1393,7 +1570,6 @@ async function onRemoteOffer(msg) {
   const peer = msg.from;
   const conn = ensurePeerConnection(peer, false);
   if (!conn) return;
-
   try {
     if (conn.pc.signalingState === 'have-local-offer') {
       try { await conn.pc.setLocalDescription({ type: 'rollback' }); } catch (_) {}
@@ -1403,16 +1579,13 @@ async function onRemoteOffer(msg) {
       try { await conn.pc.addIceCandidate(c); } catch (_) {}
     }
     conn.pendingIce = [];
-
     const answer = await conn.pc.createAnswer();
     await conn.pc.setLocalDescription(answer);
     send({
       type: 'rtc:answer', to: peer, callId: groupCall.id,
       sdp: conn.pc.localDescription
     });
-  } catch (e) {
-    console.error('[onRemoteOffer]', e);
-  }
+  } catch (e) { console.error('[onRemoteOffer]', e); }
 }
 
 async function onRemoteAnswer(msg) {
@@ -1425,9 +1598,7 @@ async function onRemoteAnswer(msg) {
       try { await conn.pc.addIceCandidate(c); } catch (_) {}
     }
     conn.pendingIce = [];
-  } catch (e) {
-    console.error('[onRemoteAnswer]', e);
-  }
+  } catch (e) { console.error('[onRemoteAnswer]', e); }
 }
 
 async function onRemoteIce(msg) {
@@ -1457,9 +1628,7 @@ async function renegotiateWith(peer) {
       type: 'rtc:offer', to: peer, callId: groupCall.id,
       sdp: conn.pc.localDescription
     });
-  } catch (e) {
-    console.error('[renegotiateWith]', e);
-  }
+  } catch (e) { console.error('[renegotiateWith]', e); }
 }
 
 async function renegotiateAll() {
@@ -1477,20 +1646,16 @@ function tuneVideoSender(sender) {
     const params = sender.getParameters();
     if (!params.encodings || !params.encodings.length) params.encodings = [{}];
     const n = groupCall ? Math.max(1, groupCall.peers.size) : 1;
-    let maxBitrate = 800_000;
-    let maxFramerate = 24;
+    let maxBitrate = 800_000, maxFramerate = 24;
     if (n === 2) { maxBitrate = 500_000; maxFramerate = 24; }
     else if (n === 3) { maxBitrate = 400_000; maxFramerate = 20; }
     else if (n >= 4) { maxBitrate = 300_000; maxFramerate = 20; }
-
     params.encodings[0].maxBitrate = maxBitrate;
     params.encodings[0].maxFramerate = maxFramerate;
     params.degradationPreference = 'balanced';
     try { params.encodings[0].networkPriority = 'high'; } catch (_) {}
     return sender.setParameters(params);
-  } catch (e) {
-    console.warn('[tuneVideoSender]', e);
-  }
+  } catch (e) { console.warn('[tuneVideoSender]', e); }
 }
 
 /* ============================================================
@@ -1499,18 +1664,24 @@ function tuneVideoSender(sender) {
 function renderVideoGrid() {
   const grid = $('stageGrid');
   const hint = $('stageHint');
+  const tools = $('stageTools');
 
   if (!groupCall) {
     grid.innerHTML = '';
     hint.style.display = 'flex';
+    tools.classList.add('hidden');
+    unfocusPeer();
     return;
   }
   hint.style.display = 'none';
+  tools.classList.toggle('hidden', groupCall.peers.size === 0);
 
+  // 自己的 tile
   let selfTile = grid.querySelector('.tile.self');
   if (!selfTile) {
     selfTile = document.createElement('div');
     selfTile.className = 'tile self';
+    selfTile.dataset.peer = me.username;
     selfTile.innerHTML =
       '<video autoplay playsinline muted></video>' +
       '<div class="tile-label">我</div>';
@@ -1524,9 +1695,11 @@ function renderVideoGrid() {
   const hasVideo = groupCall.localStream
     && groupCall.localStream.getVideoTracks().length > 0;
   selfTile.style.display = hasVideo ? '' : 'none';
+  selfTile.classList.toggle('sharing', !!groupCall.screenStream);
 
+  // 其他 peer 的 tile
   for (const peer of groupCall.peers) {
-    let tile = grid.querySelector('.tile[data-peer="' + CSS.escape(peer) + '"]');
+    let tile = grid.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
     if (!tile) {
       tile = document.createElement('div');
       tile.className = 'tile';
@@ -1534,20 +1707,49 @@ function renderVideoGrid() {
       tile.innerHTML =
         '<video autoplay playsinline></video>' +
         '<div class="tile-label">' + escapeHtml(peer) + '</div>' +
-        '<div class="tile-state">连接中</div>';
+        '<div class="tile-state">连接中</div>' +
+        '<button class="tile-focus" title="聚焦此画面">⤢</button>';
+      // 点击聚焦按钮
+      tile.querySelector('.tile-focus').addEventListener('click', ev => {
+        ev.stopPropagation();
+        focusPeer(peer);
+      });
+      // 双击 tile 也能聚焦
+      tile.addEventListener('dblclick', () => focusPeer(peer));
       grid.appendChild(tile);
+    }
+    // 同步该 peer 的 remoteStream
+    const conn = groupCall.connections.get(peer);
+    if (conn) {
+      const v = tile.querySelector('video');
+      if (v.srcObject !== conn.remoteStream) {
+        v.srcObject = conn.remoteStream;
+        v.play().catch(() => {});
+      }
+      tile.classList.toggle('sharing', !!conn.isSharing);
+      // 更新共享标记
+      const label = tile.querySelector('.tile-label');
+      if (label) {
+        const base = escapeHtml(peer);
+        label.innerHTML = conn.isSharing
+          ? base + '<span class="share-tag">📺</span>'
+          : base;
+      }
     }
   }
 
+  // 清理已移除的 peer
   for (const tile of [...grid.querySelectorAll('.tile[data-peer]')]) {
-    if (!groupCall.peers.has(tile.dataset.peer)) tile.remove();
+    const p = tile.dataset.peer;
+    if (p === me.username) continue;
+    if (!groupCall.peers.has(p)) tile.remove();
   }
 
   tryPlayAllVideos();
 }
 
 function updatePeerVideo(peer, stream) {
-  const tile = document.querySelector('.tile[data-peer="' + CSS.escape(peer) + '"]');
+  const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
   if (!tile) return;
   const v = tile.querySelector('video');
   if (v.srcObject !== stream) {
@@ -1557,7 +1759,7 @@ function updatePeerVideo(peer, stream) {
 }
 
 function updateTileState(peer, text, cls = '') {
-  const tile = document.querySelector('.tile[data-peer="' + CSS.escape(peer) + '"]');
+  const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
   if (!tile) return;
   const st = tile.querySelector('.tile-state');
   if (st) {
@@ -1567,10 +1769,91 @@ function updateTileState(peer, text, cls = '') {
 }
 
 function tryPlayAllVideos() {
-  document.querySelectorAll('.tile video').forEach(v => {
+  document.querySelectorAll('.tile video, .focus-main video').forEach(v => {
     if (v.srcObject && v.paused) v.play().catch(() => {});
   });
 }
+
+/* ============================================================
+   聚焦 / 缩放
+   ============================================================ */
+function focusPeer(peer) {
+  if (!groupCall) return;
+  focusedPeer = peer;
+  const stage = $('stage');
+  stage.classList.add('focused');
+
+  const fv = $('focusVideo');
+  const label = $('focusLabel');
+  const selfTile = document.querySelector('.tile.self');
+
+  // 静音所有网格里的视频
+  document.querySelectorAll('.stage-grid .tile video').forEach(v => {
+    v.muted = true;
+  });
+
+  if (peer === me.username) {
+    // 聚焦自己
+    fv.srcObject = groupCall.localStream;
+    fv.muted = true;
+    label.textContent = '我';
+  } else {
+    const conn = groupCall.connections.get(peer);
+    if (!conn) { unfocusPeer(); return; }
+    fv.srcObject = conn.remoteStream;
+    fv.muted = false;
+    label.textContent = peer + (conn.isSharing ? ' · 共享屏中' : '');
+  }
+  fv.play().catch(() => {});
+
+  // 标记聚焦的 tile
+  document.querySelectorAll('.tile').forEach(t => t.classList.remove('focused'));
+  const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
+  if (tile) tile.classList.add('focused');
+
+  // 聚焦时隐藏缩放工具
+  $('stageTools').classList.add('hidden');
+}
+
+function unfocusPeer() {
+  focusedPeer = null;
+  $('stage').classList.remove('focused');
+  const fv = $('focusVideo');
+  if (fv) {
+    fv.srcObject = null;
+    fv.muted = false;
+  }
+  // 恢复网格声音
+  document.querySelectorAll('.stage-grid .tile video').forEach(v => {
+    v.muted = false;
+  });
+  document.querySelectorAll('.tile').forEach(t => t.classList.remove('focused'));
+  // 重新显示缩放工具（若有连线）
+  if (groupCall && groupCall.peers.size > 0) {
+    $('stageTools').classList.remove('hidden');
+  }
+}
+
+$('btnFocusClose').onclick = unfocusPeer;
+
+$('btnFocusFs').onclick = () => {
+  const fv = $('focusVideo');
+  if (!fv) return;
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  } else if (fv.requestFullscreen) {
+    fv.requestFullscreen().catch(() => {});
+  } else if (fv.webkitRequestFullscreen) {
+    fv.webkitRequestFullscreen();
+  }
+};
+
+// 缩放滑块
+$('scaleRange').oninput = e => {
+  const v = parseFloat(e.target.value);
+  $('scaleVal').textContent = v.toFixed(1) + '×';
+  document.documentElement.style.setProperty('--tile-min', (240 * v) + 'px');
+};
 
 /* ============================================================
    控制通道
@@ -1588,7 +1871,8 @@ function bindCtrl(ch, peer) {
     try { m = JSON.parse(ev.data); } catch (_) { return; }
 
     if (m.type === 'chat') {
-      logNode(m.text, 'you', peer);
+      const who = (typeof m.from === 'string' && m.from) ? m.from : peer;
+      logNode(m.text, 'you', who);
     } else if (m.type === 'file-offer') {
       fileOfferQueue.push(Object.assign({}, m, { from: peer }));
       showNextFileOffer();
@@ -1599,6 +1883,42 @@ function bindCtrl(ch, peer) {
     } else if (m.type === 'file-reject') {
       sendQueue = sendQueue.filter(x => !(x.id === m.id && x.peer === peer));
       sysLog(peer + ' 辞谢文书：' + (m.name || ''));
+    } else if (m.type === 'screen-start') {
+      // 对端开始共享屏幕
+      const conn = groupCall && groupCall.connections.get(peer);
+      if (conn) conn.isSharing = true;
+      const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
+      if (tile) {
+        tile.classList.add('sharing');
+        const label = tile.querySelector('.tile-label');
+        if (label) label.innerHTML = escapeHtml(peer) + '<span class="share-tag">📺</span>';
+      }
+      sysLog('「' + peer + '」开始共享屏幕');
+      renderMembers();
+      // 若正聚焦该 peer，更新标签
+      if (focusedPeer === peer) {
+        $('focusLabel').textContent = peer + ' · 共享屏中';
+      }
+    } else if (m.type === 'screen-end') {
+      // 对端停止共享屏幕
+      const conn = groupCall && groupCall.connections.get(peer);
+      if (conn) conn.isSharing = false;
+      const tile = document.querySelector('.tile[data-peer="' + cssEscape(peer) + '"]');
+      if (tile) {
+        tile.classList.remove('sharing');
+        const label = tile.querySelector('.tile-label');
+        if (label) label.textContent = peer;
+        // 关键：强制刷新视频元素，清除残留的屏幕画面
+        const v = tile.querySelector('video');
+        if (v) {
+          v.load && v.load();
+        }
+      }
+      sysLog('「' + peer + '」已停止共享');
+      renderMembers();
+      if (focusedPeer === peer) {
+        $('focusLabel').textContent = peer;
+      }
     }
   };
 }
@@ -1620,7 +1940,6 @@ function bindFile(ch, peer) {
           chunks: [], got: 0, node: null, bar: null, from: peer
         };
         rxFileByPeer.set(peer, entry);
-
         const node = document.createElement('div');
         node.className = 'file-card';
         node.innerHTML =
@@ -1656,7 +1975,6 @@ function finalizeReceive(peer) {
   const f = rxFileByPeer.get(peer);
   if (!f) return;
   rxFileByPeer.delete(peer);
-
   const blob = new Blob(f.chunks, { type: f.mime || 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   if (f.node) {
@@ -1673,7 +1991,6 @@ function finalizeReceive(peer) {
   sysLog('已收 ' + peer + ' 的文书：' + f.name);
 }
 
-/* ---- 接收确认弹窗队列 ---- */
 function showNextFileOffer() {
   if (currentFileOffer || fileOfferQueue.length === 0) return;
   const offer = fileOfferQueue.shift();
@@ -1695,8 +2012,7 @@ $('btnFileAccept').onclick = () => {
     if (conn && conn.dcCtrl && conn.dcCtrl.readyState === 'open') {
       try {
         conn.dcCtrl.send(JSON.stringify({
-          type: 'file-accept',
-          id: currentFileOffer.id
+          type: 'file-accept', id: currentFileOffer.id
         }));
       } catch (_) {}
     }
@@ -1710,8 +2026,7 @@ $('btnFileReject').onclick = () => {
     if (conn && conn.dcCtrl && conn.dcCtrl.readyState === 'open') {
       try {
         conn.dcCtrl.send(JSON.stringify({
-          type: 'file-reject',
-          id: currentFileOffer.id,
+          type: 'file-reject', id: currentFileOffer.id,
           name: currentFileOffer.name
         }));
       } catch (_) {}
@@ -1721,7 +2036,7 @@ $('btnFileReject').onclick = () => {
 };
 
 /* ============================================================
-   多人传书
+   文件发送
    ============================================================ */
 $('btnPick').onclick = () => $('fileInput').click();
 $('fileInput').onchange = e => {
@@ -1730,18 +2045,13 @@ $('fileInput').onchange = e => {
 };
 
 function enqueueFile(file) {
-  if (!groupCall || groupCall.peers.size === 0) {
-    return toast('文路未通', 'error');
-  }
-
+  if (!groupCall || groupCall.peers.size === 0) return toast('文路未通', 'error');
   let count = 0;
   for (const peer of groupCall.peers) {
     const conn = groupCall.connections.get(peer);
     if (!conn || !conn.dcCtrl || conn.dcCtrl.readyState !== 'open') continue;
-
     const id = rand();
     sendQueue.push({ id, file, peer, accepted: false, started: false });
-
     try {
       conn.dcCtrl.send(JSON.stringify({
         type: 'file-offer', id,
@@ -1753,20 +2063,16 @@ function enqueueFile(file) {
       sendQueue = sendQueue.filter(x => x.id !== id);
     }
   }
-
   if (count === 0) return toast('文路未通', 'error');
   sysLog('已向 ' + count + ' 位同道发送文书之请：' + file.name);
 }
 
-/* 并发处理所有已同意的传输任务 */
 function pumpQueue() {
   for (const item of sendQueue) {
     if (!item.accepted || item.started) continue;
     if (activeTasks.has(item.id)) continue;
-
     item.started = true;
     activeTasks.add(item.id);
-
     runFileTransfer(item).finally(() => {
       activeTasks.delete(item.id);
       sendQueue = sendQueue.filter(x => x.id !== item.id);
@@ -1786,7 +2092,6 @@ async function runFileTransfer(item) {
   $('log').appendChild(node);
   $('log').scrollTop = $('log').scrollHeight;
   const bar = node.querySelector('.bar i');
-
   try {
     await transferFile(item, bar);
     node.querySelector('.row').lastElementChild.textContent = '已发';
@@ -1803,7 +2108,6 @@ async function transferFile(item, bar) {
   }
   const dc = conn.dcFile;
   const file = item.file;
-
   dc.send(JSON.stringify({
     t: 'meta', id: item.id, name: file.name,
     size: file.size, mime: file.type || 'application/octet-stream'
@@ -1832,7 +2136,7 @@ async function transferFile(item, bar) {
 }
 
 /* ============================================================
-   文字聊天（广播 + 带发送人）
+   文字聊天
    ============================================================ */
 $('btnSend').onclick = sendChat;
 $('chatInput').onkeydown = e => { if (e.key === 'Enter') sendChat(); };
@@ -1842,18 +2146,19 @@ function sendChat() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
-
   let sent = 0;
   for (const [, conn] of groupCall.connections) {
     if (conn.dcCtrl && conn.dcCtrl.readyState === 'open') {
       try {
-        conn.dcCtrl.send(JSON.stringify({ type: 'chat', text }));
+        conn.dcCtrl.send(JSON.stringify({
+          type: 'chat', text, from: me.username
+        }));
         sent++;
       } catch (_) {}
     }
   }
   if (!sent) return toast('文路未通', 'error');
-  logNode(text, 'me', me.username);
+  logNode(text, 'me', me.username + '（我）');
   input.value = '';
 }
 
@@ -1873,13 +2178,10 @@ $('btnMute').onclick = () => {
   $('btnMute').classList.toggle('active', !track.enabled);
 };
 
+/* ---- 屏幕共享 ---- */
 $('btnScreen').onclick = async () => {
   if (!groupCall || groupCall.peers.size === 0) return;
-
-  if (groupCall.screenStream) {
-    await stopScreenShare();
-    return;
-  }
+  if (groupCall.screenStream) { await stopScreenShare(); return; }
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
     return toast('当前浏览器不支持屏幕共享', 'error');
@@ -1888,8 +2190,7 @@ $('btnScreen').onclick = async () => {
   let stream;
   try {
     stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { frameRate: { ideal: 15, max: 30 } },
-      audio: false
+      video: { frameRate: { ideal: 15, max: 30 } }, audio: false
     });
   } catch (e) {
     if (e && e.name === 'NotAllowedError') return toast('已取消共享', 'info');
@@ -1907,8 +2208,7 @@ $('btnScreen').onclick = async () => {
   try {
     let needRenegotiate = false;
     for (const [, conn] of groupCall.connections) {
-      const sender = conn.pc.getSenders().find(
-        s => s.track && s.track.kind === 'video');
+      const sender = conn.pc.getSenders().find(s => s.track && s.track.kind === 'video');
       if (sender) {
         await sender.replaceTrack(screenTrack);
         try {
@@ -1928,6 +2228,7 @@ $('btnScreen').onclick = async () => {
 
     groupCall.screenTrack = screenTrack;
 
+    // 本地预览
     const selfTile = document.querySelector('.tile.self');
     if (selfTile) {
       selfTile.classList.add('sharing');
@@ -1936,10 +2237,14 @@ $('btnScreen').onclick = async () => {
       v.play().catch(() => {});
     }
 
+    // 通知其他 peer
+    broadcastCtrl({ type: 'screen-start' });
+
     screenTrack.onended = () => { stopScreenShare(); };
 
     $('btnScreen').textContent = '止共享';
     $('btnScreen').classList.add('active');
+    renderMembers();
     toast('屏幕共享已开始', 'success');
   } catch (e) {
     stream.getTracks().forEach(t => t.stop());
@@ -1950,39 +2255,46 @@ $('btnScreen').onclick = async () => {
 
 async function stopScreenShare() {
   if (!groupCall) return;
+  if (!groupCall.screenStream && !groupCall.screenTrack) return;
 
+  const cameraTrack = groupCall.localStream
+    ? groupCall.localStream.getVideoTracks()[0] : null;
+
+  // 关键顺序：先替换回摄像头，再停止屏幕轨道
+  let needRenegotiate = false;
+  for (const [, conn] of groupCall.connections) {
+    const sender = conn.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+    if (!sender) continue;
+
+    if (cameraTrack) {
+      try { await sender.replaceTrack(cameraTrack); } catch (e) { console.warn(e); }
+      tuneVideoSender(sender);
+    } else {
+      try { conn.pc.removeTrack(sender); } catch (e) { console.warn(e); }
+      needRenegotiate = true;
+    }
+  }
+
+  // 停止屏幕流
   if (groupCall.screenStream) {
     try { groupCall.screenStream.getTracks().forEach(t => t.stop()); } catch (_) {}
     groupCall.screenStream = null;
   }
+  groupCall.screenTrack = null;
 
-  if (groupCall.screenTrack) {
-    const cameraTrack = groupCall.localStream
-      ? groupCall.localStream.getVideoTracks()[0] : null;
-
-    let needRenegotiate = false;
-    for (const [, conn] of groupCall.connections) {
-      const sender = conn.pc.getSenders().find(
-        s => s.track && s.track.kind === 'video');
-      if (sender) {
-        if (cameraTrack) {
-          try { await sender.replaceTrack(cameraTrack); } catch (_) {}
-          tuneVideoSender(sender);
-        } else {
-          try { conn.pc.removeTrack(sender); } catch (_) {}
-          needRenegotiate = true;
-        }
-      }
-    }
-    if (needRenegotiate) await renegotiateAll();
-    groupCall.screenTrack = null;
+  if (needRenegotiate) {
+    try { await renegotiateAll(); } catch (_) {}
   }
 
+  // 通知其他 peer
+  broadcastCtrl({ type: 'screen-end' });
+
+  // 恢复本地预览
   const selfTile = document.querySelector('.tile.self');
   if (selfTile) {
     selfTile.classList.remove('sharing');
     const v = selfTile.querySelector('video');
-    if (groupCall.localStream && groupCall.localStream.getVideoTracks().length) {
+    if (cameraTrack) {
       v.srcObject = groupCall.localStream;
       v.play().catch(() => {});
       selfTile.style.display = '';
@@ -1993,9 +2305,11 @@ async function stopScreenShare() {
 
   $('btnScreen').textContent = '共享屏';
   $('btnScreen').classList.remove('active');
+  renderMembers();
   toast('已停止共享', 'info');
 }
 
+/* ---- 挂断 ---- */
 $('btnHangup').onclick = () => {
   if (!groupCall) return;
   for (const peer of groupCall.peers) {
@@ -2017,20 +2331,11 @@ function cleanupGroupCall(notify = false) {
       } catch (_) {}
     }
   }
+  for (const peer of [...groupCall.connections.keys()]) closePeer(peer);
 
-  for (const peer of [...groupCall.connections.keys()]) {
-    closePeer(peer);
-  }
-
-  if (groupCall.localStream) {
-    groupCall.localStream.getTracks().forEach(t => t.stop());
-  }
-  if (groupCall.screenStream) {
-    groupCall.screenStream.getTracks().forEach(t => t.stop());
-  }
-  if (groupCall.screenTrack) {
-    try { groupCall.screenTrack.stop(); } catch (_) {}
-  }
+  if (groupCall.localStream) groupCall.localStream.getTracks().forEach(t => t.stop());
+  if (groupCall.screenStream) groupCall.screenStream.getTracks().forEach(t => t.stop());
+  if (groupCall.screenTrack) try { groupCall.screenTrack.stop(); } catch (_) {}
 
   groupCall = null;
   sendQueue = [];
@@ -2039,8 +2344,11 @@ function cleanupGroupCall(notify = false) {
   fileOfferQueue.length = 0;
   currentFileOffer = null;
 
+  unfocusPeer();
+
   $('stageGrid').innerHTML = '';
   $('stageHint').style.display = 'flex';
+  $('stageTools').classList.add('hidden');
   $('btnScreen').textContent = '共享屏';
   $('btnScreen').classList.remove('active');
   $('btnMute').textContent = '静音';
@@ -2050,6 +2358,7 @@ function cleanupGroupCall(notify = false) {
   $('peerLabel').textContent = selectedPeers.size
     ? [...selectedPeers].join(' · ')
     : '—';
+  renderMembers();
   updateButtons();
 }
 
@@ -2061,21 +2370,19 @@ function bindLoginEvents() {
   $('logoutBtn').addEventListener('click', doLogout);
   $('btnCloseLogin').addEventListener('click', closeLoginModal);
   $('btnSubmitLogin').addEventListener('click', submitLogin);
-
   $('loginPass').addEventListener('keydown', e => {
     if (e.key === 'Enter') submitLogin();
   });
   $('loginUser').addEventListener('keydown', e => {
     if (e.key === 'Enter') $('loginPass').focus();
   });
-
   $('loginMask').addEventListener('click', e => {
     if (e.target === $('loginMask')) closeLoginModal();
   });
-
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && $('loginMask').classList.contains('show')) {
-      closeLoginModal();
+    if (e.key === 'Escape') {
+      if ($('loginMask').classList.contains('show')) closeLoginModal();
+      if (focusedPeer) unfocusPeer();
     }
   });
 }
@@ -2087,6 +2394,7 @@ async function boot() {
   bindLoginEvents();
   updateLoginUI(false);
   updateButtons();
+  renderMembers();
 
   try { await fetchCsrf(); } catch (_) {}
 
