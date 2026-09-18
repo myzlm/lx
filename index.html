@@ -199,7 +199,7 @@ body::before{
 }
 
 /* ============================================================
-   视频网格舞台
+   视频网格
    ============================================================ */
 .stage{
   flex:1; min-height:0; position:relative;
@@ -332,10 +332,13 @@ button.active{
   background:linear-gradient(180deg,var(--ink-3),var(--ink-2));
   border:1px solid var(--ink-5);
 }
-.msg.you .who{
-  display:block; font-size:11px; color:var(--gold-3);
-  font-family:var(--font-kai); letter-spacing:.1em; margin-bottom:3px;
+.msg .who{
+  display:block; font-size:11px;
+  font-family:var(--font-kai); letter-spacing:.1em;
+  margin-bottom:3px;
 }
+.msg.me .who{color:var(--gold-3); text-align:right}
+.msg.you .who{color:var(--gold-3)}
 .msg.sys{
   align-self:center; background:transparent; border:none;
   color:var(--paper-3); font-size:11.5px; letter-spacing:.14em;
@@ -356,6 +359,7 @@ button.active{
   font-family:var(--font-kai); font-size:13.5px; letter-spacing:.06em;
 }
 .file-card .meta{color:var(--paper-3); font-size:11px; margin-top:3px; letter-spacing:.08em}
+.file-card .meta b{color:var(--gold-3); font-weight:400}
 .file-card a{color:var(--gold); text-decoration:none; border-bottom:1px dotted var(--gold-3)}
 .file-card a:hover{color:var(--gold-2)}
 .bar{
@@ -638,19 +642,16 @@ button.active{
 const API_BASE = 'https://myzlm.serveousercontent.com';
 const WS_URL   = 'wss://myzlm.serveousercontent.com/ws/rtc';
 
-const CHUNK_SIZE   = 16 * 1024;
-const HIGH_WATER   = 4 * 1024 * 1024;
-const LOW_WATER    = 1024 * 1024;
-const MAX_MESH     = 4;   // 最大 Mesh 参与人数（含自己）
+const CHUNK_SIZE = 16 * 1024;
+const HIGH_WATER = 4 * 1024 * 1024;
+const LOW_WATER  = 1024 * 1024;
+const MAX_MESH   = 4;
 
-/* 视频采集参数：默认 480p，比 720p 省一半带宽 */
 const VIDEO_CONSTRAINTS = {
   width:  { ideal: 640, max: 1280 },
   height: { ideal: 480, max: 720 },
   frameRate: { ideal: 20, max: 30 }
 };
-
-/* 音频采集参数 */
 const AUDIO_CONSTRAINTS = {
   echoCancellation: true,
   noiseSuppression: true,
@@ -668,15 +669,22 @@ let me = null;
 let iceServers = [{ urls: ['stun:stun.l.google.com:19302'] }];
 let onlineUsers = [];
 let selectedPeers = new Set();
-let groupCall = null;   // { id, host, peers:Set, invited:Set, media, localStream, connections:Map, screenStream, screenTrack, originalVideoTrack }
+let groupCall = null;
 let reconnectTimer = null;
+
+/* 文件发送队列：每个 (file, peer) 组合是一个独立任务 */
 let sendQueue = [];
-let sending = false;
-let rxFile = null;
+const activeTasks = new Set();
+
+/* 文件接收：每个 peer 独立跟踪 */
+const rxFileByPeer = new Map();
+
+/* 文件接收确认弹窗队列 */
+const fileOfferQueue = [];
+let currentFileOffer = null;
+
 let pendingIncoming = null;
-let pendingFileOffer = null;
 let connecting = false;
-let renegotiating = false;
 
 const $ = id => document.getElementById(id);
 const rand = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -713,13 +721,10 @@ function setStatus(text, ok) {
 function roleText(r) {
   return ({ owner: '主人', admin: '管事', member: '同门' })[r] || r;
 }
-/* 用户名比较：字典序小的主动发起 offer，避免双方同时 offer */
-function shouldIOffer(a, b) {
-  return a < b;
-}
+function shouldIOffer(a, b) { return a < b; }
 
 /* ============================================================
-   统一请求封装
+   统一请求
    ============================================================ */
 async function api(path, opts = {}) {
   const method = (opts.method || 'GET').toUpperCase();
@@ -735,10 +740,7 @@ async function api(path, opts = {}) {
   }
 
   const cfg = Object.assign({}, opts, {
-    method,
-    headers,
-    credentials: 'include',
-    mode: 'cors'
+    method, headers, credentials: 'include', mode: 'cors'
   });
 
   const res = await fetch(API_BASE + path, cfg);
@@ -775,7 +777,7 @@ async function fetchCsrf() {
 }
 
 /* ============================================================
-   消息区
+   消息区（带发送人）
    ============================================================ */
 function logNode(text, cls, who = null) {
   const d = document.createElement('div');
@@ -820,9 +822,7 @@ function openLoginModal() {
   $('loginMask').classList.add('show');
   setTimeout(() => { $('loginUser').focus(); }, 120);
 }
-function closeLoginModal() {
-  $('loginMask').classList.remove('show');
-}
+function closeLoginModal() { $('loginMask').classList.remove('show'); }
 
 async function submitLogin() {
   const username = $('loginUser').value.trim();
@@ -865,9 +865,7 @@ async function submitLogin() {
 }
 
 async function doLogout() {
-  try {
-    await api('/api/logout', { method: 'POST' });
-  } catch (_) {}
+  try { await api('/api/logout', { method: 'POST' }); } catch (_) {}
 
   me = null;
   csrf = '';
@@ -890,8 +888,7 @@ async function doLogout() {
    WebSocket
    ============================================================ */
 async function connect() {
-  if (!me) return;
-  if (connecting) return;
+  if (!me || connecting) return;
   if (ws && ws.readyState === 1) return;
 
   connecting = true;
@@ -932,7 +929,6 @@ function openWS(ticket) {
       reconnectTimer = setTimeout(() => { connect(); }, 3000);
     }
   };
-
   ws.onerror = () => {};
 }
 
@@ -944,7 +940,7 @@ function send(obj) {
 }
 
 /* ============================================================
-   信令分发
+   信令
    ============================================================ */
 function handleSignal(msg) {
   switch (msg.type) {
@@ -956,7 +952,6 @@ function handleSignal(msg) {
 
     case 'presence':
       onlineUsers = (msg.users || []).filter(u => u !== (me && me.username));
-      // 清理已离线的选中项
       for (const p of [...selectedPeers]) {
         if (onlineUsers.indexOf(p) === -1) selectedPeers.delete(p);
       }
@@ -991,7 +986,7 @@ function handleSignal(msg) {
 }
 
 /* ============================================================
-   用户列表（多选）
+   用户列表
    ============================================================ */
 function renderUsers() {
   const box = $('userList');
@@ -1034,10 +1029,8 @@ function togglePeer(u) {
     openLoginModal();
     return;
   }
-  if (groupCall) {
-    toast('通话中不可更改选择', 'info');
-    return;
-  }
+  if (groupCall) return toast('通话中不可更改选择', 'info');
+
   if (selectedPeers.has(u)) {
     selectedPeers.delete(u);
   } else {
@@ -1055,33 +1048,25 @@ function updateButtons() {
   const active = groupCall && groupCall.peers.size > 0;
   const hasSel = selectedPeers.size > 0;
   const loggedIn = !!me;
-  const onePeer = active && groupCall.peers.size === 1;
 
   $('btnVideo').disabled  = busy || !hasSel || !loggedIn;
   $('btnAudio').disabled  = busy || !hasSel || !loggedIn;
-  $('btnData').disabled   = busy || !hasSel || !loggedIn || selectedPeers.size > 1;
+  $('btnData').disabled   = busy || !hasSel || !loggedIn;
   $('btnHangup').disabled = !busy;
   $('btnMute').disabled   = !active;
   $('btnScreen').disabled = !active;
   $('btnSend').disabled   = !active;
-  // 文件传输仅 1v1 可用
-  $('btnPick').disabled   = !onePeer;
+  $('btnPick').disabled   = !active;   // 多人也可传书
   $('chatInput').disabled = !active;
 }
 
 /* ============================================================
-   群组通话管理
+   群组通话
    ============================================================ */
-
-/* ---- 发起方 ---- */
 async function startCall(media) {
   if (!me) { toast('请先登录', 'error'); openLoginModal(); return; }
   if (groupCall) return toast('已有通话进行中', 'info');
   if (selectedPeers.size === 0) return toast('请先选择用户', 'info');
-
-  if (media === 'data' && selectedPeers.size > 1) {
-    return toast('传书仅支持单对单', 'info');
-  }
 
   let stream = null;
   try {
@@ -1090,7 +1075,6 @@ async function startCall(media) {
         audio: AUDIO_CONSTRAINTS,
         video: media === 'video' ? VIDEO_CONSTRAINTS : false
       });
-      // 提示编码器优先保流畅
       if (stream.getVideoTracks()[0]) {
         stream.getVideoTracks()[0].contentHint = 'motion';
       }
@@ -1111,27 +1095,18 @@ async function startCall(media) {
     localStream: stream,
     connections: new Map(),
     screenStream: null,
-    screenTrack: null,
-    originalVideoTrack: null
+    screenTrack: null
   };
 
   renderVideoGrid();
   updateButtons();
 
-  // 逐个发送邀请
   for (const peer of invited) {
-    send({
-      type: 'call:invite',
-      to: peer,
-      callId,
-      media,
-      from: me.username
-    });
+    send({ type: 'call:invite', to: peer, callId, media, from: me.username });
   }
   sysLog('正在呼叫 ' + invited.size + ' 位同道');
 }
 
-/* ---- 被邀请方 ---- */
 function onIncoming(msg) {
   if (groupCall) {
     send({ type: 'call:reject', to: msg.from, callId: msg.callId, reason: 'busy' });
@@ -1181,14 +1156,13 @@ $('btnAccept').onclick = async () => {
   groupCall = {
     id: inv.callId,
     host: inv.from,
-    peers: new Set([inv.from]),   // 立刻把发起者加入 peers
+    peers: new Set([inv.from]),
     invited: new Set(),
     media: inv.media,
     localStream: stream,
     connections: new Map(),
     screenStream: null,
-    screenTrack: null,
-    originalVideoTrack: null
+    screenTrack: null
   };
 
   renderVideoGrid();
@@ -1197,7 +1171,6 @@ $('btnAccept').onclick = async () => {
   send({ type: 'call:accept', to: inv.from, callId: inv.callId, from: me.username });
   sysLog('已应邀 ' + inv.from);
 
-  // 与被邀请者按规则建立连接
   if (shouldIOffer(me.username, inv.from)) {
     ensurePeerConnection(inv.from, true);
   } else {
@@ -1205,23 +1178,17 @@ $('btnAccept').onclick = async () => {
   }
 };
 
-/* ---- 发起方收到 accept ---- */
 function onAccepted(msg) {
   if (!groupCall || msg.callId !== groupCall.id) return;
   const peer = msg.from;
 
   groupCall.invited.delete(peer);
-  if (!groupCall.peers.has(peer)) {
-    groupCall.peers.add(peer);
-  }
+  if (!groupCall.peers.has(peer)) groupCall.peers.add(peer);
 
-  // 广播最新成员列表给所有已加入的成员
   broadcastMembers();
-
   renderVideoGrid();
   updateButtons();
 
-  // 与新成员建立连接
   if (shouldIOffer(me.username, peer)) {
     ensurePeerConnection(peer, true);
   } else {
@@ -1229,7 +1196,6 @@ function onAccepted(msg) {
   }
 }
 
-/* ---- 广播成员列表 ---- */
 function broadcastMembers() {
   if (!groupCall) return;
   const members = [me.username, ...groupCall.peers];
@@ -1243,21 +1209,17 @@ function broadcastMembers() {
   }
 }
 
-/* ---- 收到成员列表更新 ---- */
 function onMembers(msg) {
   if (!groupCall || msg.callId !== groupCall.id) return;
   const members = Array.isArray(msg.members) ? msg.members : [];
 
   const newPeers = new Set(
-    members.filter(u => u && u !== me.username && u !== groupCall.host
-      && onlineUsers.concat([groupCall.host]).indexOf(u) !== -1)
+    members.filter(u => u && u !== me.username && u !== groupCall.host)
   );
-  // host 本身就已在 peers 里（或者被邀请方已有）
   if (groupCall.host !== me.username && members.indexOf(groupCall.host) !== -1) {
     newPeers.add(groupCall.host);
   }
 
-  // 移除已离场
   for (const old of [...groupCall.peers]) {
     if (!newPeers.has(old)) {
       closePeer(old);
@@ -1265,7 +1227,6 @@ function onMembers(msg) {
     }
   }
 
-  // 加入新成员
   const added = [];
   for (const p of newPeers) {
     if (!groupCall.peers.has(p)) {
@@ -1277,7 +1238,6 @@ function onMembers(msg) {
   renderVideoGrid();
   updateButtons();
 
-  // 按规则建连
   for (const p of added) {
     if (shouldIOffer(me.username, p)) {
       ensurePeerConnection(p, true);
@@ -1287,7 +1247,6 @@ function onMembers(msg) {
   }
 }
 
-/* ---- 被拒 ---- */
 function onRejected(msg) {
   if (!groupCall || msg.callId !== groupCall.id) return;
   const peer = msg.from;
@@ -1295,7 +1254,6 @@ function onRejected(msg) {
     groupCall.invited.delete(peer);
     sysLog(peer + ' 辞谢了邀请');
   }
-  // 全部被拒 → 结束
   if (groupCall.invited.size === 0 && groupCall.peers.size === 0
       && groupCall.host === me.username) {
     toast('通话无人应邀', 'info');
@@ -1304,7 +1262,6 @@ function onRejected(msg) {
   updateButtons();
 }
 
-/* ---- 有人离开 ---- */
 function onLeave(msg) {
   if (!groupCall || msg.callId !== groupCall.id) return;
   const peer = msg.from;
@@ -1318,13 +1275,12 @@ function onLeave(msg) {
 }
 
 /* ============================================================
-   PeerConnection 管理
+   PeerConnection
    ============================================================ */
 function ensurePeerConnection(peer, isInitiator) {
   if (!groupCall) return null;
   if (groupCall.connections.has(peer)) {
     const existing = groupCall.connections.get(peer);
-    // 如果原来不是发起方，但现在需要发起，重新协商
     if (isInitiator && !existing.isInitiator) {
       renegotiateWith(peer);
     }
@@ -1350,7 +1306,6 @@ function ensurePeerConnection(peer, isInitiator) {
   };
   groupCall.connections.set(peer, conn);
 
-  // 添加本地轨道
   if (groupCall.localStream) {
     for (const track of groupCall.localStream.getTracks()) {
       const sender = pc.addTrack(track, groupCall.localStream);
@@ -1358,7 +1313,6 @@ function ensurePeerConnection(peer, isInitiator) {
     }
   }
 
-  // 数据通道：发起方创建
   if (isInitiator) {
     const ctrl = pc.createDataChannel('ctrl', { ordered: true });
     const file = pc.createDataChannel('file', { ordered: true });
@@ -1392,16 +1346,11 @@ function ensurePeerConnection(peer, isInitiator) {
   pc.onconnectionstatechange = () => {
     const st = pc.connectionState;
     conn.state = st;
-    if (st === 'connected') {
-      updateTileState(peer, '已通', 'ok');
-    } else if (st === 'failed' || st === 'closed') {
-      updateTileState(peer, '中断', 'bad');
-    } else if (st === 'disconnected') {
-      updateTileState(peer, '不稳', 'bad');
-    }
+    if (st === 'connected') updateTileState(peer, '已通', 'ok');
+    else if (st === 'failed' || st === 'closed') updateTileState(peer, '中断', 'bad');
+    else if (st === 'disconnected') updateTileState(peer, '不稳', 'bad');
   };
 
-  // 发起协商
   if (isInitiator) {
     (async () => {
       try {
@@ -1430,6 +1379,11 @@ function closePeer(peer) {
   if (conn.dcFile) try { conn.dcFile.close(); } catch (_) {}
 
   groupCall.connections.delete(peer);
+
+  // 清理该 peer 的发送/接收队列
+  sendQueue = sendQueue.filter(x => x.peer !== peer);
+  rxFileByPeer.delete(peer);
+
   const tile = document.querySelector('.tile[data-peer="' + CSS.escape(peer) + '"]');
   if (tile) tile.remove();
 }
@@ -1489,7 +1443,6 @@ async function onRemoteIce(msg) {
   }
 }
 
-/* ---- 与指定 peer 重新协商 ---- */
 async function renegotiateWith(peer) {
   if (!groupCall) return;
   const conn = groupCall.connections.get(peer);
@@ -1509,26 +1462,20 @@ async function renegotiateWith(peer) {
   }
 }
 
-/* ---- 与所有 peer 重新协商（用于屏幕共享等）---- */
 async function renegotiateAll() {
   if (!groupCall) return;
   for (const [peer, conn] of groupCall.connections) {
-    if (conn.state === 'connected') {
-      await renegotiateWith(peer);
-    }
+    if (conn.state === 'connected') await renegotiateWith(peer);
   }
 }
 
 /* ============================================================
-   SDP / 发送参数优化
+   码率自适应
    ============================================================ */
 function tuneVideoSender(sender) {
   try {
     const params = sender.getParameters();
-    if (!params.encodings || !params.encodings.length) {
-      params.encodings = [{}];
-    }
-    // 根据当前连接数动态调整码率
+    if (!params.encodings || !params.encodings.length) params.encodings = [{}];
     const n = groupCall ? Math.max(1, groupCall.peers.size) : 1;
     let maxBitrate = 800_000;
     let maxFramerate = 24;
@@ -1547,7 +1494,7 @@ function tuneVideoSender(sender) {
 }
 
 /* ============================================================
-   视频网格渲染
+   视频网格
    ============================================================ */
 function renderVideoGrid() {
   const grid = $('stageGrid');
@@ -1560,7 +1507,6 @@ function renderVideoGrid() {
   }
   hint.style.display = 'none';
 
-  // 自己的 tile
   let selfTile = grid.querySelector('.tile.self');
   if (!selfTile) {
     selfTile = document.createElement('div');
@@ -1579,7 +1525,6 @@ function renderVideoGrid() {
     && groupCall.localStream.getVideoTracks().length > 0;
   selfTile.style.display = hasVideo ? '' : 'none';
 
-  // 每个 peer 的 tile
   for (const peer of groupCall.peers) {
     let tile = grid.querySelector('.tile[data-peer="' + CSS.escape(peer) + '"]');
     if (!tile) {
@@ -1594,10 +1539,8 @@ function renderVideoGrid() {
     }
   }
 
-  // 移除多余
   for (const tile of [...grid.querySelectorAll('.tile[data-peer]')]) {
-    const peer = tile.dataset.peer;
-    if (!groupCall.peers.has(peer)) tile.remove();
+    if (!groupCall.peers.has(tile.dataset.peer)) tile.remove();
   }
 
   tryPlayAllVideos();
@@ -1625,19 +1568,15 @@ function updateTileState(peer, text, cls = '') {
 
 function tryPlayAllVideos() {
   document.querySelectorAll('.tile video').forEach(v => {
-    if (v.srcObject && v.paused) {
-      v.play().catch(() => {});
-    }
+    if (v.srcObject && v.paused) v.play().catch(() => {});
   });
 }
 
 /* ============================================================
-   数据通道
+   控制通道
    ============================================================ */
 function bindCtrl(ch, peer) {
-  ch.onopen = () => {
-    updateButtons();
-  };
+  ch.onopen = () => updateButtons();
   ch.onclose = () => {
     if (groupCall && groupCall.state === 'connected') {
       sysLog('与 ' + peer + ' 的文路已闭');
@@ -1651,23 +1590,22 @@ function bindCtrl(ch, peer) {
     if (m.type === 'chat') {
       logNode(m.text, 'you', peer);
     } else if (m.type === 'file-offer') {
-      pendingFileOffer = m;
-      pendingFileOffer.from = peer;
-      $('fileDesc').textContent =
-        peer + ' 想赠：' + m.name + '（' + fmtSize(m.size) + '）';
-      $('fileMask').classList.add('show');
+      fileOfferQueue.push(Object.assign({}, m, { from: peer }));
+      showNextFileOffer();
     } else if (m.type === 'file-accept') {
-      const item = sendQueue.find(x => x.id === m.id);
+      const item = sendQueue.find(x => x.id === m.id && x.peer === peer);
       if (item) item.accepted = true;
       pumpQueue();
     } else if (m.type === 'file-reject') {
-      sendQueue = sendQueue.filter(x => x.id !== m.id);
+      sendQueue = sendQueue.filter(x => !(x.id === m.id && x.peer === peer));
       sysLog(peer + ' 辞谢文书：' + (m.name || ''));
-      pumpQueue();
     }
   };
 }
 
+/* ============================================================
+   文件接收
+   ============================================================ */
 function bindFile(ch, peer) {
   ch.binaryType = 'arraybuffer';
   ch.bufferedAmountLowThreshold = LOW_WATER;
@@ -1677,44 +1615,48 @@ function bindFile(ch, peer) {
       let m;
       try { m = JSON.parse(ev.data); } catch (_) { return; }
       if (m.t === 'meta') {
-        rxFile = {
+        const entry = {
           id: m.id, name: m.name, size: m.size, mime: m.mime,
           chunks: [], got: 0, node: null, bar: null, from: peer
         };
+        rxFileByPeer.set(peer, entry);
+
         const node = document.createElement('div');
         node.className = 'file-card';
         node.innerHTML =
           '<div class="row"><div class="name">' +
           escapeHtml(m.name) + '</div>' +
           '<div style="color:var(--paper-3)">接收中</div></div>' +
-          '<div class="meta">来自 ' + escapeHtml(peer) + ' · ' +
+          '<div class="meta">受自 <b>' + escapeHtml(peer) + '</b> · ' +
           fmtSize(m.size) + '</div>' +
           '<div class="bar"><i></i></div>';
         $('log').appendChild(node);
         $('log').scrollTop = $('log').scrollHeight;
-        rxFile.node = node;
-        rxFile.bar = node.querySelector('.bar i');
+        entry.node = node;
+        entry.bar = node.querySelector('.bar i');
       } else if (m.t === 'end') {
-        finalizeReceive();
+        finalizeReceive(peer);
       }
       return;
     }
-    if (rxFile && ev.data instanceof ArrayBuffer) {
-      rxFile.chunks.push(ev.data);
-      rxFile.got += ev.data.byteLength;
-      if (rxFile.bar) {
-        rxFile.bar.style.width =
-          Math.min(100, rxFile.got / rxFile.size * 100) + '%';
+    const entry = rxFileByPeer.get(peer);
+    if (entry && ev.data instanceof ArrayBuffer) {
+      entry.chunks.push(ev.data);
+      entry.got += ev.data.byteLength;
+      if (entry.bar) {
+        entry.bar.style.width =
+          Math.min(100, entry.got / entry.size * 100) + '%';
       }
-      if (rxFile.got >= rxFile.size) finalizeReceive();
+      if (entry.got >= entry.size) finalizeReceive(peer);
     }
   };
 }
 
-function finalizeReceive() {
-  if (!rxFile) return;
-  const f = rxFile;
-  rxFile = null;
+function finalizeReceive(peer) {
+  const f = rxFileByPeer.get(peer);
+  if (!f) return;
+  rxFileByPeer.delete(peer);
+
   const blob = new Blob(f.chunks, { type: f.mime || 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   if (f.node) {
@@ -1728,43 +1670,58 @@ function finalizeReceive() {
       'display:inline-block;margin-top:9px;font-family:var(--font-kai);letter-spacing:.14em';
     f.node.appendChild(a);
   }
-  sysLog('文书已收：' + f.name);
+  sysLog('已收 ' + peer + ' 的文书：' + f.name);
+}
+
+/* ---- 接收确认弹窗队列 ---- */
+function showNextFileOffer() {
+  if (currentFileOffer || fileOfferQueue.length === 0) return;
+  const offer = fileOfferQueue.shift();
+  currentFileOffer = offer;
+  $('fileDesc').textContent =
+    offer.from + ' 想赠：' + offer.name + '（' + fmtSize(offer.size) + '）';
+  $('fileMask').classList.add('show');
+}
+
+function closeFileOffer() {
+  currentFileOffer = null;
+  $('fileMask').classList.remove('show');
+  setTimeout(showNextFileOffer, 300);
 }
 
 $('btnFileAccept').onclick = () => {
-  $('fileMask').classList.remove('show');
-  if (pendingFileOffer && pendingFileOffer.from) {
-    const conn = groupCall && groupCall.connections.get(pendingFileOffer.from);
+  if (currentFileOffer) {
+    const conn = groupCall && groupCall.connections.get(currentFileOffer.from);
     if (conn && conn.dcCtrl && conn.dcCtrl.readyState === 'open') {
       try {
         conn.dcCtrl.send(JSON.stringify({
           type: 'file-accept',
-          id: pendingFileOffer.id
+          id: currentFileOffer.id
         }));
       } catch (_) {}
     }
-    pendingFileOffer = null;
   }
+  closeFileOffer();
 };
+
 $('btnFileReject').onclick = () => {
-  $('fileMask').classList.remove('show');
-  if (pendingFileOffer && pendingFileOffer.from) {
-    const conn = groupCall && groupCall.connections.get(pendingFileOffer.from);
+  if (currentFileOffer) {
+    const conn = groupCall && groupCall.connections.get(currentFileOffer.from);
     if (conn && conn.dcCtrl && conn.dcCtrl.readyState === 'open') {
       try {
         conn.dcCtrl.send(JSON.stringify({
           type: 'file-reject',
-          id: pendingFileOffer.id,
-          name: pendingFileOffer.name
+          id: currentFileOffer.id,
+          name: currentFileOffer.name
         }));
       } catch (_) {}
     }
-    pendingFileOffer = null;
   }
+  closeFileOffer();
 };
 
 /* ============================================================
-   文件发送（仅 1v1）
+   多人传书
    ============================================================ */
 $('btnPick').onclick = () => $('fileInput').click();
 $('fileInput').onchange = e => {
@@ -1772,43 +1729,59 @@ $('fileInput').onchange = e => {
   e.target.value = '';
 };
 
-function getOnlyPeerConn() {
-  if (!groupCall || groupCall.peers.size !== 1) return null;
-  const peer = [...groupCall.peers][0];
-  const conn = groupCall.connections.get(peer);
-  return conn ? { peer, conn } : null;
-}
-
 function enqueueFile(file) {
-  const pair = getOnlyPeerConn();
-  if (!pair || !pair.conn.dcCtrl || pair.conn.dcCtrl.readyState !== 'open') {
+  if (!groupCall || groupCall.peers.size === 0) {
     return toast('文路未通', 'error');
   }
-  const id = rand();
-  sendQueue.push({ id, file, accepted: false, peer: pair.peer });
-  try {
-    pair.conn.dcCtrl.send(JSON.stringify({
-      type: 'file-offer', id,
-      name: file.name, size: file.size,
-      mime: file.type || 'application/octet-stream'
-    }));
-  } catch (_) {}
-  sysLog('已发文书之请：' + file.name);
+
+  let count = 0;
+  for (const peer of groupCall.peers) {
+    const conn = groupCall.connections.get(peer);
+    if (!conn || !conn.dcCtrl || conn.dcCtrl.readyState !== 'open') continue;
+
+    const id = rand();
+    sendQueue.push({ id, file, peer, accepted: false, started: false });
+
+    try {
+      conn.dcCtrl.send(JSON.stringify({
+        type: 'file-offer', id,
+        name: file.name, size: file.size,
+        mime: file.type || 'application/octet-stream'
+      }));
+      count++;
+    } catch (_) {
+      sendQueue = sendQueue.filter(x => x.id !== id);
+    }
+  }
+
+  if (count === 0) return toast('文路未通', 'error');
+  sysLog('已向 ' + count + ' 位同道发送文书之请：' + file.name);
 }
 
-async function pumpQueue() {
-  if (sending) return;
-  const idx = sendQueue.findIndex(x => x.accepted);
-  if (idx === -1) return;
-  sending = true;
-  const item = sendQueue[idx];
+/* 并发处理所有已同意的传输任务 */
+function pumpQueue() {
+  for (const item of sendQueue) {
+    if (!item.accepted || item.started) continue;
+    if (activeTasks.has(item.id)) continue;
 
+    item.started = true;
+    activeTasks.add(item.id);
+
+    runFileTransfer(item).finally(() => {
+      activeTasks.delete(item.id);
+      sendQueue = sendQueue.filter(x => x.id !== item.id);
+    });
+  }
+}
+
+async function runFileTransfer(item) {
   const node = document.createElement('div');
   node.className = 'file-card';
   node.innerHTML =
     '<div class="row"><div class="name">' + escapeHtml(item.file.name) + '</div>' +
     '<div style="color:var(--paper-3)">发送中</div></div>' +
-    '<div class="meta">' + fmtSize(item.file.size) + '</div>' +
+    '<div class="meta">致 <b>' + escapeHtml(item.peer) + '</b> · ' +
+    fmtSize(item.file.size) + '</div>' +
     '<div class="bar"><i></i></div>';
   $('log').appendChild(node);
   $('log').scrollTop = $('log').scrollHeight;
@@ -1819,12 +1792,8 @@ async function pumpQueue() {
     node.querySelector('.row').lastElementChild.textContent = '已发';
   } catch (e) {
     node.querySelector('.row').lastElementChild.textContent = '失败';
-    toast('文书发送失败：' + e.message, 'error');
+    toast('给 ' + item.peer + ' 的文书发送失败：' + e.message, 'error');
   }
-
-  sendQueue = sendQueue.filter(x => x.id !== item.id);
-  sending = false;
-  if (sendQueue.some(x => x.accepted)) pumpQueue();
 }
 
 async function transferFile(item, bar) {
@@ -1834,6 +1803,7 @@ async function transferFile(item, bar) {
   }
   const dc = conn.dcFile;
   const file = item.file;
+
   dc.send(JSON.stringify({
     t: 'meta', id: item.id, name: file.name,
     size: file.size, mime: file.type || 'application/octet-stream'
@@ -1862,7 +1832,7 @@ async function transferFile(item, bar) {
 }
 
 /* ============================================================
-   文字聊天（广播）
+   文字聊天（广播 + 带发送人）
    ============================================================ */
 $('btnSend').onclick = sendChat;
 $('chatInput').onkeydown = e => { if (e.key === 'Enter') sendChat(); };
@@ -1873,17 +1843,17 @@ function sendChat() {
   const text = input.value.trim();
   if (!text) return;
 
-  let sent = false;
+  let sent = 0;
   for (const [, conn] of groupCall.connections) {
     if (conn.dcCtrl && conn.dcCtrl.readyState === 'open') {
       try {
         conn.dcCtrl.send(JSON.stringify({ type: 'chat', text }));
-        sent = true;
+        sent++;
       } catch (_) {}
     }
   }
   if (!sent) return toast('文路未通', 'error');
-  logNode(text, 'me');
+  logNode(text, 'me', me.username);
   input.value = '';
 }
 
@@ -1903,7 +1873,6 @@ $('btnMute').onclick = () => {
   $('btnMute').classList.toggle('active', !track.enabled);
 };
 
-/* ---- 屏幕共享 ---- */
 $('btnScreen').onclick = async () => {
   if (!groupCall || groupCall.peers.size === 0) return;
 
@@ -1923,9 +1892,7 @@ $('btnScreen').onclick = async () => {
       audio: false
     });
   } catch (e) {
-    if (e && e.name === 'NotAllowedError') {
-      return toast('已取消共享', 'info');
-    }
+    if (e && e.name === 'NotAllowedError') return toast('已取消共享', 'info');
     return toast('共享失败：' + (e && e.message), 'error');
   }
 
@@ -1935,7 +1902,6 @@ $('btnScreen').onclick = async () => {
     return toast('未获取到屏幕视频', 'error');
   }
   screenTrack.contentHint = 'detail';
-
   groupCall.screenStream = stream;
 
   try {
@@ -1944,9 +1910,7 @@ $('btnScreen').onclick = async () => {
       const sender = conn.pc.getSenders().find(
         s => s.track && s.track.kind === 'video');
       if (sender) {
-        // 已有视频轨 → 直接替换
         await sender.replaceTrack(screenTrack);
-        // 提升码率以保证屏幕清晰
         try {
           const p = sender.getParameters();
           if (!p.encodings || !p.encodings.length) p.encodings = [{}];
@@ -1956,18 +1920,14 @@ $('btnScreen').onclick = async () => {
           await sender.setParameters(p);
         } catch (_) {}
       } else {
-        // 语音通话 → 添加轨道并重新协商
         conn.pc.addTrack(screenTrack, stream);
         needRenegotiate = true;
       }
     }
-    if (needRenegotiate) {
-      await renegotiateAll();
-    }
+    if (needRenegotiate) await renegotiateAll();
 
     groupCall.screenTrack = screenTrack;
 
-    // 本地预览显示屏幕
     const selfTile = document.querySelector('.tile.self');
     if (selfTile) {
       selfTile.classList.add('sharing');
@@ -1998,8 +1958,7 @@ async function stopScreenShare() {
 
   if (groupCall.screenTrack) {
     const cameraTrack = groupCall.localStream
-      ? groupCall.localStream.getVideoTracks()[0]
-      : null;
+      ? groupCall.localStream.getVideoTracks()[0] : null;
 
     let needRenegotiate = false;
     for (const [, conn] of groupCall.connections) {
@@ -2008,7 +1967,6 @@ async function stopScreenShare() {
       if (sender) {
         if (cameraTrack) {
           try { await sender.replaceTrack(cameraTrack); } catch (_) {}
-          // 恢复普通码率
           tuneVideoSender(sender);
         } else {
           try { conn.pc.removeTrack(sender); } catch (_) {}
@@ -2016,13 +1974,10 @@ async function stopScreenShare() {
         }
       }
     }
-    if (needRenegotiate) {
-      await renegotiateAll();
-    }
+    if (needRenegotiate) await renegotiateAll();
     groupCall.screenTrack = null;
   }
 
-  // 恢复本地预览
   const selfTile = document.querySelector('.tile.self');
   if (selfTile) {
     selfTile.classList.remove('sharing');
@@ -2041,14 +1996,11 @@ async function stopScreenShare() {
   toast('已停止共享', 'info');
 }
 
-/* ---- 挂断 ---- */
 $('btnHangup').onclick = () => {
   if (!groupCall) return;
-  // 通知所有人
   for (const peer of groupCall.peers) {
     send({ type: 'call:leave', to: peer, callId: groupCall.id, from: me.username });
   }
-  // 未接通的邀请也取消
   for (const peer of groupCall.invited) {
     send({ type: 'call:reject', to: peer, callId: groupCall.id, reason: 'cancelled' });
   }
@@ -2082,9 +2034,10 @@ function cleanupGroupCall(notify = false) {
 
   groupCall = null;
   sendQueue = [];
-  sending = false;
-  rxFile = null;
-  renegotiating = false;
+  activeTasks.clear();
+  rxFileByPeer.clear();
+  fileOfferQueue.length = 0;
+  currentFileOffer = null;
 
   $('stageGrid').innerHTML = '';
   $('stageHint').style.display = 'flex';
@@ -2101,7 +2054,7 @@ function cleanupGroupCall(notify = false) {
 }
 
 /* ============================================================
-   登录事件绑定
+   登录事件
    ============================================================ */
 function bindLoginEvents() {
   $('loginBtn').addEventListener('click', openLoginModal);
