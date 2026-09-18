@@ -261,6 +261,11 @@ button.danger:hover:not(:disabled){
   box-shadow:0 0 18px rgba(193,57,43,.34);
 }
 button.sm{padding:6px 12px; font-size:12.5px; letter-spacing:.1em}
+button.active{
+  background:linear-gradient(180deg,#5d4920,#3e3018);
+  color:var(--gold-2); border-color:var(--gold-2);
+  box-shadow:0 0 18px rgba(201,169,97,.35), inset 0 0 16px rgba(201,169,97,.15);
+}
 
 /* ============================================================
    消息 · 竹简
@@ -617,6 +622,7 @@ let pendingIncoming = null;
 let pendingFileOffer = null;
 let screenStream = null;
 let connecting = false;
+let renegotiating = false;
 
 const $ = id => document.getElementById(id);
 const rand = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -889,7 +895,6 @@ function handleSignal(msg) {
 
     case 'presence':
       onlineUsers = (msg.users || []).filter(u => u !== (me && me.username));
-      // 若选中的用户已离线，清空选择
       if (selectedPeer && onlineUsers.indexOf(selectedPeer) === -1) {
         selectedPeer = null;
         $('peerLabel').textContent = '—';
@@ -1024,7 +1029,8 @@ async function startCall(peer, media) {
   call = {
     id: callId, peer, role: 'caller', media,
     pc: null, localStream: stream, remoteStream: new MediaStream(),
-    dcCtrl: null, dcFile: null, pendingIce: [], state: 'inviting'
+    dcCtrl: null, dcFile: null, pendingIce: [], state: 'inviting',
+    screenTrack: null, originalVideoTrack: null
   };
 
   buildPC();
@@ -1087,7 +1093,8 @@ $('btnAccept').onclick = async () => {
   call = {
     id: inv.callId, peer: inv.from, role: 'callee', media: inv.media,
     pc: null, localStream: stream, remoteStream: new MediaStream(),
-    dcCtrl: null, dcFile: null, pendingIce: [], state: 'connecting'
+    dcCtrl: null, dcFile: null, pendingIce: [], state: 'connecting',
+    screenTrack: null, originalVideoTrack: null
   };
 
   buildPC();
@@ -1181,6 +1188,11 @@ async function onAccepted(msg) {
 async function onRemoteOffer(msg) {
   if (!call || call.id !== msg.callId) return;
   try {
+    // 协商冲突：本地正在 offer，放弃本地的，接受对方的
+    if (call.pc.signalingState === 'have-local-offer') {
+      console.warn('[RTC] 检测到协商冲突，本地放弃 offer');
+      try { await call.pc.setLocalDescription({ type: 'rollback' }); } catch (_) {}
+    }
     await call.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
     await flushIce();
     const answer = await call.pc.createAnswer();
@@ -1191,7 +1203,7 @@ async function onRemoteOffer(msg) {
     });
   } catch (e) {
     toast('处理 offer 失败：' + e.message, 'error');
-    cleanupCall(true);
+    // 注意：不再 cleanupCall，重新协商失败只是本次共享失败
   }
 }
 
@@ -1222,6 +1234,32 @@ async function flushIce() {
   call.pendingIce = [];
   for (const c of list) {
     try { await call.pc.addIceCandidate(c); } catch (_) {}
+  }
+}
+
+/* ---- 重新协商（修改轨道后向对方重新发起 offer）---- */
+async function renegotiate() {
+  if (!call || !call.pc) return;
+  if (renegotiating) return;
+  renegotiating = true;
+  try {
+    // 若已有未完成的本地 offer，先放弃（防止冲突）
+    if (call.pc.signalingState === 'have-local-offer') {
+      try { await call.pc.setLocalDescription({ type: 'rollback' }); } catch (_) {}
+    }
+    const offer = await call.pc.createOffer();
+    await call.pc.setLocalDescription(offer);
+    send({
+      type: 'rtc:offer',
+      to: call.peer,
+      callId: call.id,
+      sdp: call.pc.localDescription
+    });
+  } catch (e) {
+    console.error('[renegotiate] 失败:', e);
+    toast('重新协商失败：' + e.message, 'error');
+  } finally {
+    renegotiating = false;
   }
 }
 
@@ -1456,33 +1494,130 @@ $('btnMute').onclick = () => {
   if (!track) return;
   track.enabled = !track.enabled;
   $('btnMute').textContent = track.enabled ? '静音' : '开声';
+  $('btnMute').classList.toggle('active', !track.enabled);
 };
 
+/* ============================================================
+   屏幕共享（支持语音通话中开启、重新协商、冲突保护）
+   ============================================================ */
 $('btnScreen').onclick = async () => {
-  if (!call) return;
+  if (!call || call.state !== 'connected') return;
+
+  // 已在共享 → 停止
   if (screenStream) {
-    screenStream.getTracks().forEach(t => t.stop());
-    screenStream = null;
-    $('btnScreen').textContent = '共享屏';
-    if (call.localStream) {
-      const vt = call.localStream.getVideoTracks()[0];
-      const sender = call.pc.getSenders().find(s => s.track && s.track.kind === 'video');
-      if (sender && vt) await sender.replaceTrack(vt);
-    }
+    await stopScreenShare();
     return;
   }
+
+  // 兼容性检查
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+    return toast('当前浏览器不支持屏幕共享', 'error');
+  }
+
+  let stream;
   try {
-    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    const st = screenStream.getVideoTracks()[0];
-    const sender = call.pc.getSenders().find(s => s.track && s.track.kind === 'video');
-    if (sender) await sender.replaceTrack(st);
-    else call.pc.addTrack(st, screenStream);
-    st.onended = () => $('btnScreen').click();
-    $('btnScreen').textContent = '止共享';
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: { ideal: 15, max: 30 } },
+      audio: false
+    });
   } catch (e) {
-    toast('已取消共享', 'info');
+    if (e && e.name === 'NotAllowedError') {
+      return toast('已取消共享', 'info');
+    }
+    return toast('共享失败：' + (e && e.message), 'error');
+  }
+
+  const screenTrack = stream.getVideoTracks()[0];
+  if (!screenTrack) {
+    stream.getTracks().forEach(t => t.stop());
+    return toast('未获取到屏幕视频', 'error');
+  }
+
+  screenStream = stream;
+
+  try {
+    // 找出当前的视频 sender（可能是摄像头，也可能没有）
+    const sender = call.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+
+    if (sender) {
+      // 已有视频 sender（视频通话中）→ 直接替换轨道，无需重新协商
+      await sender.replaceTrack(screenTrack);
+      // 记录原摄像头轨道，停止共享时恢复
+      if (!call.originalVideoTrack && call.localStream) {
+        call.originalVideoTrack = call.localStream.getVideoTracks()[0] || null;
+      }
+    } else {
+      // 语音通话中 → 添加视频 sender 并重新协商
+      call.pc.addTrack(screenTrack, stream);
+      await renegotiate();
+    }
+
+    call.screenTrack = screenTrack;
+
+    // 本地预览显示屏幕内容（非镜像）
+    const local = $('localVideo');
+    local.srcObject = stream;
+    local.style.display = 'block';
+    local.style.transform = 'none';
+
+    // 用户点浏览器自带的"停止共享"时同步状态
+    screenTrack.onended = () => { stopScreenShare(); };
+
+    $('btnScreen').textContent = '止共享';
+    $('btnScreen').classList.add('active');
+    toast('屏幕共享已开始', 'success');
+  } catch (e) {
+    // 出错时清理
+    stream.getTracks().forEach(t => t.stop());
+    screenStream = null;
+    toast('共享失败：' + (e && e.message), 'error');
   }
 };
+
+/* ---- 停止共享 ---- */
+async function stopScreenShare() {
+  if (!call) return;
+
+  if (screenStream) {
+    try { screenStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+    screenStream = null;
+  }
+
+  if (call.pc && call.screenTrack) {
+    const sender = call.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+    const cameraTrack = call.localStream
+      ? call.localStream.getVideoTracks()[0]
+      : null;
+
+    if (sender) {
+      if (cameraTrack) {
+        // 原通话有摄像头（视频通话）→ 恢复摄像头
+        try { await sender.replaceTrack(cameraTrack); } catch (_) {}
+      } else {
+        // 原通话无视频（语音通话）→ 移除视频 sender 并重新协商
+        try { call.pc.removeTrack(sender); } catch (_) {}
+        try { await renegotiate(); } catch (_) {}
+      }
+    }
+    call.screenTrack = null;
+    call.originalVideoTrack = null;
+  }
+
+  // 恢复本地预览
+  const local = $('localVideo');
+  if (call.localStream && call.localStream.getVideoTracks().length) {
+    local.srcObject = call.localStream;
+    local.style.display = 'block';
+    local.style.transform = 'scaleX(-1)';
+  } else {
+    local.srcObject = null;
+    local.style.display = 'none';
+  }
+
+  $('btnScreen').textContent = '共享屏';
+  $('btnScreen').classList.remove('active');
+  toast('已停止共享', 'info');
+}
 
 $('btnHangup').onclick = () => {
   if (!call) return;
@@ -1500,6 +1635,7 @@ function showStage() {
   if (call.localStream && call.localStream.getVideoTracks().length) {
     local.srcObject = call.localStream;
     local.style.display = 'block';
+    local.style.transform = 'scaleX(-1)';
   } else {
     local.style.display = 'none';
   }
@@ -1512,20 +1648,35 @@ function cleanupCall(notify) {
     try { send({ type: 'call:hangup', to: call.peer, callId: call.id }); } catch (_) {}
   }
   try { if (call.pc) call.pc.close(); } catch (_) {}
-  if (call.localStream) call.localStream.getTracks().forEach(t => t.stop());
-  if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+
+  if (call.localStream) {
+    call.localStream.getTracks().forEach(t => t.stop());
+  }
+  if (screenStream) {
+    screenStream.getTracks().forEach(t => t.stop());
+    screenStream = null;
+  }
+  if (call.screenTrack) {
+    try { call.screenTrack.stop(); } catch (_) {}
+    call.screenTrack = null;
+  }
+  call.originalVideoTrack = null;
 
   call = null;
   sendQueue = [];
   sending = false;
   rxFile = null;
+  renegotiating = false;
 
   const rv = $('remoteVideo'), lv = $('localVideo');
   rv.srcObject = null; rv.style.display = 'none';
   lv.srcObject = null; lv.style.display = 'none';
+  lv.style.transform = 'scaleX(-1)';
   $('stageHint').style.display = 'block';
   $('btnScreen').textContent = '共享屏';
+  $('btnScreen').classList.remove('active');
   $('btnMute').textContent = '静音';
+  $('btnMute').classList.remove('active');
   $('incomingMask').classList.remove('show');
   $('fileMask').classList.remove('show');
   updateButtons();
